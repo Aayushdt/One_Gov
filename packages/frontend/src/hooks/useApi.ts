@@ -46,4 +46,10 @@ export const api = {
 
   verifyAuditChain: (citizenId: string) =>
     req<{ valid: boolean; brokenAt?: number; totalEntries: number }>(`/api/audit/${citizenId}/verify`),
+
+  tamperAuditChain: (citizenId: string) =>
+    req<{ tamperedSeq: number }>(`/api/audit/${citizenId}/tamper`, { method: 'POST' }),
+
+  restoreAuditChain: (citizenId: string) =>
+    req<{ restored: boolean }>(`/api/audit/${citizenId}/restore`, { method: 'POST' }),
 };

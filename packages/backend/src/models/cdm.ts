@@ -6,6 +6,9 @@ export interface IdentityRecord {
   source: string;
   name: string;
   dob: string; // ISO 8601
+  gender?: string;
+  maskedId?: string;
+  docType?: string;
 }
 
 export interface EducationRecord {
@@ -13,6 +16,9 @@ export interface EducationRecord {
   source: string;
   institution: string;
   enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'UNKNOWN';
+  program?: string;
+  academicYear?: string;
+  cgpa?: string;
 }
 
 export interface IncomeRecord {
@@ -20,6 +26,9 @@ export interface IncomeRecord {
   source: string;
   eligibilityBand: 'LOW' | 'MEDIUM' | 'HIGH';
   meetsThreshold: boolean;
+  taxYear?: string;
+  panMasked?: string;
+  filingStatus?: string;
   // ⛔ rawIncome / incomeRange are NEVER present here — enforced by normalize()
 }
 
@@ -34,6 +43,9 @@ export interface IdentityRaw {
   externalId: string;
   fullName: string;
   dateOfBirth: string;
+  gender?: string;
+  maskedId?: string;
+  docType?: string;
   verified: boolean;
   verifiedAt: string;
   source: string;
@@ -43,8 +55,10 @@ export interface EducationRaw {
   studentId: string;
   institutionName: string;
   enrollmentStatus: string;
-  courseLevel: string;
-  academicYear: string;
+  courseLevel?: string;
+  program?: string;
+  academicYear?: string;
+  cgpa?: string;
   source: string;
 }
 
@@ -53,5 +67,7 @@ export interface RevenueRaw {
   incomeRange: string; // NEVER forwarded beyond this type
   incomeBand: 'LOW' | 'MEDIUM' | 'HIGH';
   taxYear: string;
+  panMasked?: string;
+  filingStatus?: string;
   source: string;
 }

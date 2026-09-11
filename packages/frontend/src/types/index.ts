@@ -45,6 +45,9 @@ export interface IdentityRecord {
   source: string;
   name: string;
   dob: string;
+  gender?: string;
+  maskedId?: string;
+  docType?: string;
 }
 
 export interface EducationRecord {
@@ -52,6 +55,9 @@ export interface EducationRecord {
   source: string;
   institution: string;
   enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'UNKNOWN';
+  program?: string;
+  academicYear?: string;
+  cgpa?: string;
 }
 
 export interface IncomeRecord {
@@ -59,6 +65,9 @@ export interface IncomeRecord {
   source: string;
   eligibilityBand: 'LOW' | 'MEDIUM' | 'HIGH';
   meetsThreshold: boolean;
+  taxYear?: string;
+  panMasked?: string;
+  filingStatus?: string;
 }
 
 export interface AuditEntry {

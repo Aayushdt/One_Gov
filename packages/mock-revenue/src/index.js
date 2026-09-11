@@ -4,9 +4,6 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 4003;
 
-// Deterministic failure injection: parse REVENUE_FAIL_COUNTS env var
-// Format: JSON object mapping externalId -> number of times to fail before succeeding
-// e.g. '{"PAN-LIKE-00003":1}' means Sneha's first call fails, second succeeds
 let failCounts = {};
 try {
   failCounts = JSON.parse(process.env.REVENUE_FAIL_COUNTS || '{}');
@@ -14,13 +11,45 @@ try {
   console.warn('Could not parse REVENUE_FAIL_COUNTS, defaulting to no failures');
 }
 
-// In-memory hit counter per externalId
 const hitCounters = {};
 
 const TAXPAYERS = {
-  'PAN-LIKE-00001': { externalId: 'PAN-LIKE-00001', incomeRange: '0-3LPA', incomeBand: 'LOW', taxYear: '2024-25', source: 'REVENUE_DEPARTMENT_V3' },
-  'PAN-LIKE-00002': { externalId: 'PAN-LIKE-00002', incomeRange: '12LPA+', incomeBand: 'HIGH', taxYear: '2024-25', source: 'REVENUE_DEPARTMENT_V3' },
-  'PAN-LIKE-00003': { externalId: 'PAN-LIKE-00003', incomeRange: '2-3LPA', incomeBand: 'LOW', taxYear: '2024-25', source: 'REVENUE_DEPARTMENT_V3' },
+  'PAN-LIKE-00001': {
+    externalId: 'PAN-LIKE-00001',
+    incomeRange: '₹2,40,000 (0-3LPA Band)',
+    incomeBand: 'LOW',
+    taxYear: 'AY 2024-25',
+    panMasked: 'ABCPS****F',
+    filingStatus: 'VERIFIED_ITR_FILED',
+    source: 'REVENUE_DEPARTMENT_V3',
+  },
+  'PAN-LIKE-00002': {
+    externalId: 'PAN-LIKE-00002',
+    incomeRange: '₹14,50,000 (12LPA+ Band)',
+    incomeBand: 'HIGH',
+    taxYear: 'AY 2024-25',
+    panMasked: 'XYZPV****H',
+    filingStatus: 'VERIFIED_ITR_FILED',
+    source: 'REVENUE_DEPARTMENT_V3',
+  },
+  'PAN-LIKE-00003': {
+    externalId: 'PAN-LIKE-00003',
+    incomeRange: '₹2,80,000 (2-3LPA Band)',
+    incomeBand: 'LOW',
+    taxYear: 'AY 2024-25',
+    panMasked: 'DEFPP****K',
+    filingStatus: 'VERIFIED_ITR_FILED',
+    source: 'REVENUE_DEPARTMENT_V3',
+  },
+  'PAN-LIKE-00004': {
+    externalId: 'PAN-LIKE-00004',
+    incomeRange: '₹1,90,000 (0-3LPA Band)',
+    incomeBand: 'LOW',
+    taxYear: 'AY 2024-25',
+    panMasked: 'GHJPR****M',
+    filingStatus: 'VERIFIED_ITR_FILED',
+    source: 'REVENUE_DEPARTMENT_V3',
+  },
 };
 
 app.get('/taxpayers/:externalId', (req, res) => {
@@ -31,7 +60,7 @@ app.get('/taxpayers/:externalId', (req, res) => {
   if (hitCounters[externalId] < requiredFailCount) {
     hitCounters[externalId]++;
     console.log(`[mock-revenue] Injecting 503 for ${externalId} (hit ${hitCounters[externalId]}/${requiredFailCount})`);
-    return res.status(503).json({ error: 'UPSTREAM_UNAVAILABLE', retryAfter: 5 });
+    return res.status(503).json({ error: 'UPSTREAM_UNAVAILABLE', retryAfter: 2 });
   }
 
   const record = TAXPAYERS[externalId];

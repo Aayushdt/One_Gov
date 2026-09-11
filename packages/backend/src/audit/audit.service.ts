@@ -65,6 +65,47 @@ class AuditService {
   async getTrail(citizenId: string) {
     return prisma.auditEntry.findMany({ where: { citizenId }, orderBy: { seq: 'asc' } });
   }
+
+  async tamperEntry(citizenId: string): Promise<{ tamperedSeq: number }> {
+    const entries = await prisma.auditEntry.findMany({ where: { citizenId }, orderBy: { seq: 'asc' } });
+    if (entries.length === 0) throw new Error('No entries to tamper');
+    const target = entries.length >= 2 ? entries[1] : entries[0];
+
+    const modifiedPayloadRaw = JSON.stringify({ ...(target.payload as object), _unauthorizedMutation: 'ADMIN_DIRECT_DB_EDIT', tamperedAt: new Date().toISOString() });
+    await prisma.auditEntry.update({
+      where: { id: target.id },
+      data: {
+        payloadRaw: modifiedPayloadRaw,
+        payload: { ...(target.payload as object), _unauthorizedMutation: 'ADMIN_DIRECT_DB_EDIT' } as any,
+      },
+    });
+    return { tamperedSeq: target.seq };
+  }
+
+  async restoreChain(citizenId: string): Promise<{ restored: boolean }> {
+    const entries = await prisma.auditEntry.findMany({ where: { citizenId }, orderBy: { seq: 'asc' } });
+    let runningPrevHash = GENESIS_HASH;
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const cleanPayload = { ...(entry.payload as any) };
+      delete cleanPayload._unauthorizedMutation;
+      delete cleanPayload.tamperedAt;
+      const cleanRaw = JSON.stringify(cleanPayload);
+      const recomputedHash = createHash('sha256').update(runningPrevHash + entry.seq.toString() + cleanRaw).digest('hex');
+
+      await prisma.auditEntry.update({
+        where: { id: entry.id },
+        data: {
+          payload: cleanPayload,
+          payloadRaw: cleanRaw,
+          prevHash: runningPrevHash,
+          hash: recomputedHash,
+        },
+      });
+      runningPrevHash = recomputedHash;
+    }
+    return { restored: true };
+  }
 }
 
 export const auditService = new AuditService();

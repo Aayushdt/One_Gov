@@ -42,7 +42,15 @@ export class IdentityConnector {
   }
 
   normalize(raw: IdentityRaw): IdentityRecord {
-    return { verified: raw.verified, source: raw.source, name: raw.fullName, dob: raw.dateOfBirth };
+    return {
+      verified: raw.verified,
+      source: raw.source,
+      name: raw.fullName,
+      dob: raw.dateOfBirth,
+      gender: raw.gender,
+      maskedId: raw.maskedId,
+      docType: raw.docType,
+    };
   }
 }
 
@@ -72,7 +80,15 @@ export class EducationConnector {
 
   normalize(raw: EducationRaw): EducationRecord {
     const status = raw.enrollmentStatus === 'ACTIVE' ? 'ACTIVE' : raw.enrollmentStatus === 'INACTIVE' ? 'INACTIVE' : 'UNKNOWN';
-    return { verified: true, source: raw.source, institution: raw.institutionName, enrollmentStatus: status };
+    return {
+      verified: true,
+      source: raw.source,
+      institution: raw.institutionName,
+      enrollmentStatus: status,
+      program: raw.program,
+      academicYear: raw.academicYear,
+      cgpa: raw.cgpa,
+    };
   }
 }
 
@@ -103,7 +119,15 @@ export class RevenueConnector {
 
   normalize(raw: RevenueRaw): IncomeRecord {
     // ⛔ raw.incomeRange is deliberately NOT included in the return value
-    return { verified: true, source: raw.source, eligibilityBand: raw.incomeBand, meetsThreshold: raw.incomeBand === 'LOW' };
+    return {
+      verified: true,
+      source: raw.source,
+      eligibilityBand: raw.incomeBand,
+      meetsThreshold: raw.incomeBand === 'LOW',
+      taxYear: raw.taxYear,
+      panMasked: raw.panMasked,
+      filingStatus: raw.filingStatus,
+    };
   }
 }
 

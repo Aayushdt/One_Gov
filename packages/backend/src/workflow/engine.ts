@@ -10,6 +10,8 @@ const RETRY_POLICY = {
   retryableStatusCodes: [503, 429, 504],
 };
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 class WorkflowEngine {
   async advance(runId: string): Promise<void> {
     const run = await prisma.workflowRun.findUniqueOrThrow({ where: { id: runId } });
@@ -17,6 +19,7 @@ class WorkflowEngine {
     try {
       switch (run.state) {
         case WorkflowState.AWAITING_CONSENT:
+          await delay(600);
           await this.transitionTo(run, WorkflowState.IDENTITY_VERIFY);
           await this.advance(runId);
           break;
@@ -25,6 +28,7 @@ class WorkflowEngine {
           const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
           const identity = await identityConnector.fetchAndNormalize(map.identityDeptId, runId, run.citizenId);
           await prisma.workflowRun.update({ where: { id: runId }, data: { identitySnapshot: identity as any } });
+          await delay(800);
           await this.transitionTo(run, WorkflowState.EDUCATION_VERIFY);
           await this.advance(runId);
           break;
@@ -34,6 +38,7 @@ class WorkflowEngine {
           const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
           const education = await educationConnector.fetchAndNormalize(map.educationDeptId, runId, run.citizenId);
           await prisma.workflowRun.update({ where: { id: runId }, data: { educationSnapshot: education as any } });
+          await delay(800);
           await this.transitionTo(run, WorkflowState.INCOME_VERIFY);
           await this.advance(runId);
           break;
@@ -45,6 +50,7 @@ class WorkflowEngine {
           const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: freshRun.citizenId } });
           const income = await revenueConnector.fetchAndNormalize(map.revenueDeptId, runId, freshRun.citizenId, freshRun.retryCount + 1);
           await prisma.workflowRun.update({ where: { id: runId }, data: { incomeSnapshot: income as any } });
+          await delay(800);
           await this.transitionTo(freshRun, WorkflowState.ELIGIBILITY_CALC);
           await this.advance(runId);
           break;
@@ -57,6 +63,7 @@ class WorkflowEngine {
           const eligible = income?.meetsThreshold === true && education?.enrollmentStatus === 'ACTIVE';
           await prisma.workflowRun.update({ where: { id: runId }, data: { eligibleResult: eligible } });
           await auditService.log({ citizenId: freshRun.citizenId, eventType: 'ELIGIBILITY_RESULT', actor: 'system', payload: { runId, eligible, reason: eligible ? 'MEETS_ALL_CRITERIA' : 'CRITERIA_NOT_MET' } });
+          await delay(600);
           await this.transitionTo(freshRun, WorkflowState.SUBMITTED);
           break;
         }
