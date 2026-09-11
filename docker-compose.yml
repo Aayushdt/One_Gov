@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: govlink
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-govlink}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  mock-identity:
+    build: ./packages/mock-identity
+    environment:
+      PORT: 4001
+    expose: ["4001"]
+
+  mock-education:
+    build: ./packages/mock-education
+    environment:
+      PORT: 4002
+    expose: ["4002"]
+
+  mock-revenue:
+    build: ./packages/mock-revenue
+    environment:
+      PORT: 4003
+      REVENUE_FAIL_COUNTS: '{"PAN-LIKE-00003":1}'
+    expose: ["4003"]
+
+  backend:
+    build: ./packages/backend
+    depends_on:
+      postgres:       { condition: service_healthy }
+      redis:          { condition: service_healthy }
+      mock-identity:  { condition: service_started }
+      mock-education: { condition: service_started }
+      mock-revenue:   { condition: service_started }
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/govlink
+      REDIS_URL: redis://redis:6379
+      IDENTITY_API_URL: http://mock-identity:4001
+      EDUCATION_API_URL: http://mock-education:4002
+      REVENUE_API_URL: http://mock-revenue:4003
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health || exit 1"]
+      interval: 8s
+      timeout: 5s
+      retries: 15
+
+  frontend:
+    build: ./packages/frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend: { condition: service_healthy }
+
+volumes:
+  pgdata:

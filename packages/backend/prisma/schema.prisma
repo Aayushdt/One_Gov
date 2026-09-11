@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Citizens ──────────────────────────────────────────────────────────────
+
+model Citizen {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  identityMap  IdentityMap?
+  consents     ConsentArtefact[]
+  workflows    WorkflowRun[]
+  auditEntries AuditEntry[]
+}
+
+// ─── Identity Mapping Table ────────────────────────────────────────────────
+
+model IdentityMap {
+  id              String  @id @default(uuid())
+  citizenId       String  @unique
+  citizen         Citizen @relation(fields: [citizenId], references: [id])
+
+  identityDeptId  String
+  educationDeptId String
+  revenueDeptId   String
+}
+
+// ─── Consent Artefact — ONE ROW PER CATEGORY ──────────────────────────────
+
+enum ConsentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum DataCategory {
+  IDENTITY
+  EDUCATION
+  INCOME
+}
+
+model ConsentArtefact {
+  id            String        @id @default(uuid())
+  citizenId     String
+  citizen       Citizen       @relation(fields: [citizenId], references: [id])
+  category      DataCategory
+  purpose       String
+  requestedBy   String
+  grantedAt     DateTime      @default(now())
+  expiresAt     DateTime
+  status        ConsentStatus @default(ACTIVE)
+  revokedAt     DateTime?
+
+  workflowRunId String
+  workflowRun   WorkflowRun   @relation(fields: [workflowRunId], references: [id])
+
+  @@unique([workflowRunId, category])
+  @@index([citizenId, category, status])
+}
+
+// ─── Workflow State Machine ────────────────────────────────────────────────
+
+enum WorkflowState {
+  AWAITING_CONSENT
+  IDENTITY_VERIFY
+  EDUCATION_VERIFY
+  INCOME_VERIFY
+  ELIGIBILITY_CALC
+  SUBMITTED
+  FAILED
+  PENDING
+}
+
+model WorkflowRun {
+  id             String        @id @default(uuid())
+  citizenId      String
+  citizen        Citizen       @relation(fields: [citizenId], references: [id])
+  state          WorkflowState @default(AWAITING_CONSENT)
+  retryCount     Int           @default(0)
+  lastError      String?
+  failureReason  String?
+  eligibleResult Boolean?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  identitySnapshot  Json?
+  educationSnapshot Json?
+  incomeSnapshot    Json?
+
+  consents     ConsentArtefact[]
+  stateHistory WorkflowStateHistory[]
+}
+
+model WorkflowStateHistory {
+  id         String        @id @default(uuid())
+  runId      String
+  run        WorkflowRun   @relation(fields: [runId], references: [id])
+  fromState  WorkflowState
+  toState    WorkflowState
+  occurredAt DateTime      @default(now())
+  metadata   Json?
+}
+
+// ─── Audit Trail — Per-Citizen Hash Chain ─────────────────────────────────
+
+model AuditEntry {
+  id         String   @id @default(uuid())
+  seq        Int
+  citizenId  String
+  citizen    Citizen  @relation(fields: [citizenId], references: [id])
+  eventType  String
+  actor      String
+  payload    Json
+  payloadRaw String
+  prevHash   String
+  hash       String
+  createdAt  DateTime @default(now())
+
+  @@unique([citizenId, seq])
+  @@index([citizenId, seq])
+}
