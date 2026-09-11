@@ -3,21 +3,22 @@ import { prisma } from '../config/db';
 import { workflowEngine } from '../workflow/engine';
 import { WorkflowState } from '@prisma/client';
 
-async function authenticate(app: FastifyInstance, req: any, reply: any) {
-  try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
-}
-
 export async function workflowRoutes(app: FastifyInstance) {
   // Start a new workflow run
-  app.post('/start', async (req, reply) => {
+  app.post<{ Body: { serviceType?: string } }>('/start', async (req, reply) => {
     try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
     const { citizenId } = req.user as any;
+    const { serviceType = 'SCHOLARSHIP' } = req.body ?? {};
 
     const run = await prisma.workflowRun.create({
-      data: { citizenId, state: WorkflowState.AWAITING_CONSENT },
+      data: {
+        citizenId,
+        serviceType,
+        state: WorkflowState.AWAITING_CONSENT,
+      },
     });
 
-    return { runId: run.id };
+    return { runId: run.id, serviceType: run.serviceType };
   });
 
   // Get workflow status
@@ -25,7 +26,22 @@ export async function workflowRoutes(app: FastifyInstance) {
     try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
     const run = await prisma.workflowRun.findUnique({
       where: { id: req.params.runId },
-      include: { consents: true, stateHistory: { orderBy: { occurredAt: 'asc' } } },
+      include: {
+        consents: true,
+        stateHistory: { orderBy: { occurredAt: 'asc' } },
+        citizen: {
+          select: {
+            id: true,
+            onegovId: true,
+            name: true,
+            email: true,
+            state: true,
+            district: true,
+            pincode: true,
+            identityMap: true,
+          }
+        }
+      },
     });
     if (!run) return reply.status(404).send({ error: 'NOT_FOUND' });
     return run;

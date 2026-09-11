@@ -10,7 +10,16 @@ interface Props {
   onRevoked: () => void;
 }
 
-const CATEGORY_LABELS: Record<DataCategory, string> = { IDENTITY: 'Identity', EDUCATION: 'Education', INCOME: 'Income' };
+const CATEGORY_LABELS: Record<DataCategory, string> = {
+  IDENTITY: 'Identity & Demographics',
+  EDUCATION: 'Higher Education',
+  INCOME: 'Income Tax Band',
+  TRANSPORT: 'Driving Licence & RTO',
+  POLICE: 'Police Clearance',
+  BANKING: 'Core Banking & KYC',
+  WELFARE: 'Public Welfare & PDS',
+  MUNICIPAL: 'Municipal Records',
+};
 
 export function ConsentRevokePanel({ artefacts, runId, onRevoked }: Props) {
   const [revoking, setRevoking] = React.useState<DataCategory | null>(null);

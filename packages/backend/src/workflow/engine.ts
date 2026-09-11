@@ -1,6 +1,10 @@
 import { WorkflowState, DataCategory } from '@prisma/client';
 import { prisma } from '../config/db';
-import { identityConnector, educationConnector, revenueConnector, ConsentViolationError, ConnectorError } from '../connectors/connectors';
+import {
+  identityConnector, educationConnector, revenueConnector,
+  transportConnector, policeConnector, bankingConnector, welfareConnector,
+  ConsentViolationError, ConnectorError
+} from '../connectors/connectors';
 import { auditService } from '../audit/audit.service';
 import { workflowRetryQueue } from './queue';
 
@@ -15,6 +19,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 class WorkflowEngine {
   async advance(runId: string): Promise<void> {
     const run = await prisma.workflowRun.findUniqueOrThrow({ where: { id: runId } });
+    const serviceType = run.serviceType || 'SCHOLARSHIP';
 
     try {
       switch (run.state) {
@@ -29,7 +34,14 @@ class WorkflowEngine {
           const identity = await identityConnector.fetchAndNormalize(map.identityDeptId, runId, run.citizenId);
           await prisma.workflowRun.update({ where: { id: runId }, data: { identitySnapshot: identity as any } });
           await delay(800);
-          await this.transitionTo(run, WorkflowState.EDUCATION_VERIFY);
+
+          if (serviceType === 'TRANSPORT') {
+            await this.transitionTo(run, WorkflowState.TRANSPORT_VERIFY);
+          } else if (serviceType === 'WELFARE') {
+            await this.transitionTo(run, WorkflowState.INCOME_VERIFY);
+          } else {
+            await this.transitionTo(run, WorkflowState.EDUCATION_VERIFY);
+          }
           await this.advance(runId);
           break;
         }
@@ -51,7 +63,56 @@ class WorkflowEngine {
           const income = await revenueConnector.fetchAndNormalize(map.revenueDeptId, runId, freshRun.citizenId, freshRun.retryCount + 1);
           await prisma.workflowRun.update({ where: { id: runId }, data: { incomeSnapshot: income as any } });
           await delay(800);
-          await this.transitionTo(freshRun, WorkflowState.ELIGIBILITY_CALC);
+
+          if (serviceType === 'WELFARE') {
+            await this.transitionTo(freshRun, WorkflowState.WELFARE_VERIFY);
+          } else {
+            await this.transitionTo(freshRun, WorkflowState.ELIGIBILITY_CALC);
+          }
+          await this.advance(runId);
+          break;
+        }
+
+        case WorkflowState.TRANSPORT_VERIFY: {
+          const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
+          const transportId = map.transportDeptId || `SIM-DL-${run.citizenId.slice(-6)}`;
+          const transport = await transportConnector.fetchAndNormalize(transportId, runId, run.citizenId);
+          await prisma.workflowRun.update({ where: { id: runId }, data: { transportSnapshot: transport as any } });
+          await delay(800);
+          await this.transitionTo(run, WorkflowState.POLICE_VERIFY);
+          await this.advance(runId);
+          break;
+        }
+
+        case WorkflowState.POLICE_VERIFY: {
+          const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
+          const policeId = map.policeDeptId || `SIM-POL-${run.citizenId.slice(-6)}`;
+          const police = await policeConnector.fetchAndNormalize(policeId, runId, run.citizenId);
+          await prisma.workflowRun.update({ where: { id: runId }, data: { policeSnapshot: police as any } });
+          await delay(800);
+          await this.transitionTo(run, WorkflowState.BANKING_VERIFY);
+          await this.advance(runId);
+          break;
+        }
+
+        case WorkflowState.WELFARE_VERIFY: {
+          const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
+          const welfareId = map.welfareDeptId || `SIM-WEL-${run.citizenId.slice(-6)}`;
+          const welfare = await welfareConnector.fetchAndNormalize(welfareId, runId, run.citizenId);
+          await prisma.workflowRun.update({ where: { id: runId }, data: { welfareSnapshot: welfare as any } });
+          await delay(800);
+          await this.transitionTo(run, WorkflowState.BANKING_VERIFY);
+          await this.advance(runId);
+          break;
+        }
+
+        case WorkflowState.BANKING_VERIFY: {
+          const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
+          const bankingId = map.bankingDeptId || `SIM-BANK-${run.citizenId.slice(-6)}`;
+          const banking = await bankingConnector.fetchAndNormalize(bankingId, runId, run.citizenId);
+          await prisma.workflowRun.update({ where: { id: runId }, data: { bankingSnapshot: banking as any } });
+          await delay(800);
+          await this.transitionTo(run, WorkflowState.ELIGIBILITY_CALC);
           await this.advance(runId);
           break;
         }
@@ -60,9 +121,28 @@ class WorkflowEngine {
           const freshRun = await prisma.workflowRun.findUniqueOrThrow({ where: { id: runId } });
           const income = freshRun.incomeSnapshot as any;
           const education = freshRun.educationSnapshot as any;
-          const eligible = income?.meetsThreshold === true && education?.enrollmentStatus === 'ACTIVE';
+          const transport = freshRun.transportSnapshot as any;
+          const police = freshRun.policeSnapshot as any;
+          const banking = freshRun.bankingSnapshot as any;
+          const welfare = freshRun.welfareSnapshot as any;
+
+          let eligible = false;
+          let reason = 'CRITERIA_NOT_MET';
+
+          if (serviceType === 'TRANSPORT') {
+            eligible = transport?.dlStatus === 'VALID' && transport?.cleanDrivingRecord === true && police?.clearanceStatus === 'CLEARED' && banking?.kycStatus === 'VERIFIED';
+            reason = eligible ? 'TRANSPORT_CLEARANCE_APPROVED' : transport?.dlStatus !== 'VALID' ? 'DRIVING_LICENCE_EXPIRED' : transport?.cleanDrivingRecord !== true ? 'UNPAID_TRAFFIC_CHALLANS' : police?.clearanceStatus !== 'CLEARED' ? 'POLICE_CLEARANCE_PENDING' : 'BANK_KYC_REQUIRED';
+          } else if (serviceType === 'WELFARE') {
+            eligible = (income?.eligibilityBand === 'LOW' || welfare?.bplStatus === true) && banking?.dbtEnabled === true;
+            reason = eligible ? 'WELFARE_BENEFIT_APPROVED' : banking?.dbtEnabled !== true ? 'DBT_BANK_LINK_REQUIRED' : 'INCOME_CEILING_EXCEEDED';
+          } else {
+            // Default: STEM / Higher Education Scholarship
+            eligible = income?.meetsThreshold === true && education?.enrollmentStatus === 'ACTIVE';
+            reason = eligible ? 'MEETS_ALL_CRITERIA' : income?.meetsThreshold !== true ? 'INCOME_CEILING_EXCEEDED' : 'ACTIVE_ENROLLMENT_REQUIRED';
+          }
+
           await prisma.workflowRun.update({ where: { id: runId }, data: { eligibleResult: eligible } });
-          await auditService.log({ citizenId: freshRun.citizenId, eventType: 'ELIGIBILITY_RESULT', actor: 'system', payload: { runId, eligible, reason: eligible ? 'MEETS_ALL_CRITERIA' : 'CRITERIA_NOT_MET' } });
+          await auditService.log({ citizenId: freshRun.citizenId, eventType: 'ELIGIBILITY_RESULT', actor: 'system', payload: { runId, serviceType, eligible, reason } });
           await delay(600);
           await this.transitionTo(freshRun, WorkflowState.SUBMITTED);
           break;

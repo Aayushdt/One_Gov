@@ -7,6 +7,9 @@ until npx prisma migrate deploy; do
   sleep 3
 done
 
+echo "==> Regenerating Prisma Client..."
+npx prisma generate
+
 echo "==> Running seed..."
 npx ts-node src/seed/seed.ts
 

@@ -24,16 +24,39 @@ async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   login: (email: string, password: string) =>
-    req<{ citizenId: string; name: string; token: string }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    req<{
+      citizenId: string;
+      onegovId: string;
+      name: string;
+      email: string;
+      state?: string;
+      district?: string;
+      pincode?: string;
+      primaryAddress?: string;
+      identityMap?: Record<string, string>;
+      token: string;
+    }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
 
-  startWorkflow: () =>
-    req<{ runId: string }>('/api/workflow/start', { method: 'POST' }),
+  getMe: () =>
+    req<any>('/api/auth/me'),
+
+  getCitizens: () =>
+    req<{ citizens: any[] }>('/api/auth/citizens'),
+
+  startWorkflow: (serviceType: string = 'SCHOLARSHIP') =>
+    req<{ runId: string; serviceType: string }>('/api/workflow/start', {
+      method: 'POST',
+      body: JSON.stringify({ serviceType }),
+    }),
 
   getWorkflow: (runId: string) =>
     req<any>(`/api/workflow/${runId}`),
 
-  grantConsent: (runId: string, categories: string[]) =>
-    req<any>('/api/consent/grant', { method: 'POST', body: JSON.stringify({ runId, categories }) }),
+  grantConsent: (runId: string, categories: string[], purpose?: string, requestedBy?: string) =>
+    req<any>('/api/consent/grant', {
+      method: 'POST',
+      body: JSON.stringify({ runId, categories, purpose, requestedBy }),
+    }),
 
   getConsent: (runId: string) =>
     req<{ artefacts: any[] }>(`/api/consent/run/${runId}`),

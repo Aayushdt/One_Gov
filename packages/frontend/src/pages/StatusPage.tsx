@@ -12,6 +12,21 @@ import { CheckCircle2, ArrowRight, ShieldAlert, Sparkles, RefreshCw } from 'luci
 
 const TERMINAL_STATES = new Set(['SUBMITTED', 'FAILED']);
 
+const SERVICE_COMPLETION_INFO: Record<string, { count: number; departments: string }> = {
+  SCHOLARSHIP: {
+    count: 3,
+    departments: 'Identity, University Enrollment, and Income Band',
+  },
+  TRANSPORT: {
+    count: 4,
+    departments: 'Identity, Driving Licence, Police Clearance, and Banking KYC',
+  },
+  WELFARE: {
+    count: 4,
+    departments: 'Identity, Income Band, Welfare Registry, and Bank DBT Seeding',
+  },
+};
+
 export function StatusPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
@@ -104,7 +119,7 @@ export function StatusPage() {
               <>
                 <RefreshCw size={14} color="var(--color-accent-amber)" className="animate-spin" />
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-accent-amber)', letterSpacing: '0.05em' }}>
-                  Auto-Retrying Revenue Dept
+                  Auto-Retry in Progress
                 </span>
               </>
             ) : (
@@ -136,16 +151,24 @@ export function StatusPage() {
             }}
           >
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Sparkles size={18} color="var(--color-success)" />
-                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: '"Playfair Display", Georgia, serif' }}>
-                  All 3 Department Verifications Completed Successfully!
-                </h3>
-              </div>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontFamily: '"Inter", sans-serif' }}>
-                Identity, University Enrollment, and Income Band were processed and hash-chain audited.
-                {countdown !== null && ` Auto-opening certificate in ${countdown}s…`}
-              </p>
+              {(() => {
+                const sType = run?.serviceType || 'SCHOLARSHIP';
+                const info = SERVICE_COMPLETION_INFO[sType] || SERVICE_COMPLETION_INFO.SCHOLARSHIP;
+                return (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <Sparkles size={18} color="var(--color-success)" />
+                      <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+                        All {info.count} Department Verifications Completed Successfully!
+                      </h3>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontFamily: '"Inter", sans-serif' }}>
+                      {info.departments} were processed and SHA-256 hash-chain audited.
+                      {countdown !== null && ` Auto-opening certificate in ${countdown}s…`}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
               <Button size="lg" onClick={() => navigate(`/result/${runId}`)}>

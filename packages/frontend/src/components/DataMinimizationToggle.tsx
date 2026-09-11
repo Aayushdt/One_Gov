@@ -30,6 +30,35 @@ const INCOME_RAW_FIELDS = [
   { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
 ];
 
+const TRANSPORT_RAW_FIELDS = [
+  { key: 'dlNumber', label: 'Driving Licence Number', rawLabel: 'dlNumber', inCDM: true },
+  { key: 'dlStatus', label: 'Licence Class Validity', rawLabel: 'dlStatus', inCDM: true },
+  { key: 'cleanDrivingRecord', label: 'Clean Driving Record (No Pending Challans)', rawLabel: 'cleanDrivingRecord', inCDM: true },
+  { key: 'unpaidChallansCount', label: 'Unpaid Challan Count', rawLabel: 'unpaidChallansCount', inCDM: true },
+  { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
+];
+
+const POLICE_RAW_FIELDS = [
+  { key: 'clearanceStatus', label: 'Police Verification Status', rawLabel: 'clearanceStatus', inCDM: true },
+  { key: 'incidentCount', label: 'Active FIR / Incident Count', rawLabel: 'incidentCount', inCDM: true },
+  { key: 'jurisdictionStation', label: 'Jurisdiction Police Station', rawLabel: 'jurisdictionStation', inCDM: true },
+  { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
+];
+
+const BANKING_RAW_FIELDS = [
+  { key: 'bankName', label: 'Designated Banking Institution', rawLabel: 'bankName', inCDM: true },
+  { key: 'maskedAccount', label: 'Masked Account Reference', rawLabel: 'maskedAccount', inCDM: true },
+  { key: 'kycStatus', label: 'RBI e-KYC Compliance', rawLabel: 'kycStatus', inCDM: true },
+  { key: 'dbtEnabled', label: 'NPCI Aadhaar-DBT Link', rawLabel: 'dbtActive', inCDM: true },
+  { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
+];
+
+const WELFARE_RAW_FIELDS = [
+  { key: 'rationCardNumber', label: 'National Ration Card ID', rawLabel: 'rationCardNumber', inCDM: true },
+  { key: 'bplStatus', label: 'Priority / BPL Household Status', rawLabel: 'bplCardHolder', inCDM: true },
+  { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
+];
+
 interface Props {
   run: WorkflowRun;
 }
@@ -44,7 +73,7 @@ function FieldRow({ label, value, stripped }: { label: string; value?: string | 
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           color: stripped ? 'var(--color-border-default)' : 'var(--color-text-secondary)',
-          fontFamily: '"Inter", system-ui, sans-serif',
+          fontFamily: '"Inter", sans-serif',
           textDecoration: stripped ? 'line-through' : 'none',
         }}
       >
@@ -59,7 +88,7 @@ function FieldRow({ label, value, stripped }: { label: string; value?: string | 
             background: 'var(--color-warning-bg)',
             padding: '2px 8px',
             borderRadius: 4,
-            fontFamily: '"Inter", system-ui, sans-serif',
+            fontFamily: '"Inter", sans-serif',
           }}
         >
           ⛔ STRIPPED AT CONNECTOR BOUNDARY
@@ -73,11 +102,11 @@ function FieldRow({ label, value, stripped }: { label: string; value?: string | 
   );
 }
 
-function DeptBlock({ title, fields, snapshot, rawView }: { title: string; fields: typeof IDENTITY_RAW_FIELDS; snapshot: Record<string, unknown>; rawView: boolean }) {
+function DeptBlock({ title, fields, snapshot, rawView }: { title: string; fields: any[]; snapshot: Record<string, unknown>; rawView: boolean }) {
   if (!snapshot) return null;
   return (
     <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 16, marginTop: 16 }}>
-      <p style={{ margin: '0 0 12px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", system-ui, sans-serif' }}>
+      <p style={{ margin: '0 0 12px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif' }}>
         {title}
       </p>
       {fields.map((f) => {
@@ -97,8 +126,12 @@ export function DataMinimizationToggle({ run }: Props) {
   const hasIdentity = !!run.identitySnapshot;
   const hasEducation = !!run.educationSnapshot;
   const hasIncome = !!run.incomeSnapshot;
+  const hasTransport = !!run.transportSnapshot;
+  const hasPolice = !!run.policeSnapshot;
+  const hasBanking = !!run.bankingSnapshot;
+  const hasWelfare = !!run.welfareSnapshot;
 
-  if (!hasIdentity && !hasEducation && !hasIncome) return null;
+  if (!hasIdentity && !hasEducation && !hasIncome && !hasTransport && !hasPolice && !hasBanking && !hasWelfare) return null;
 
   return (
     <div
@@ -117,7 +150,7 @@ export function DataMinimizationToggle({ run }: Props) {
             Data Minimization &amp; Privacy Verification
           </p>
           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontFamily: '"Inter", sans-serif' }}>
-            Compare raw department database records with the normalized, privacy-minimized Common Data Model.
+            Inspect raw department database records vs the zero-knowledge normalized Common Data Model.
           </p>
         </div>
 
@@ -138,7 +171,7 @@ export function DataMinimizationToggle({ run }: Props) {
               color: !rawView ? 'white' : 'var(--color-text-secondary)',
             }}
           >
-            🛡️ What Scholarship Service Received
+            🛡️ What OneGov Middleware Shared
           </button>
           <button
             key="raw"
@@ -156,22 +189,22 @@ export function DataMinimizationToggle({ run }: Props) {
               color: rawView ? 'white' : 'var(--color-text-secondary)',
             }}
           >
-            📂 Raw Department Records
+            📂 Raw Department Silo Data
           </button>
         </div>
       </div>
 
-      {hasIdentity && <DeptBlock title="Identity Department Record" fields={IDENTITY_RAW_FIELDS} snapshot={run.identitySnapshot as any} rawView={rawView} />}
-      {hasEducation && <DeptBlock title="Education Department Record" fields={EDUCATION_RAW_FIELDS} snapshot={run.educationSnapshot as any} rawView={rawView} />}
+      {hasIdentity && <DeptBlock title="UIDAI Identity Department Record" fields={IDENTITY_RAW_FIELDS} snapshot={run.identitySnapshot as any} rawView={rawView} />}
+      {hasEducation && <DeptBlock title="Higher Education (NAD) Registry Record" fields={EDUCATION_RAW_FIELDS} snapshot={run.educationSnapshot as any} rawView={rawView} />}
       {hasIncome && (
         <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 16, marginTop: 16 }}>
-          <p style={{ margin: '0 0 12px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", system-ui, sans-serif' }}>
-            Revenue Department (Income Tax) Record
+          <p style={{ margin: '0 0 12px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif' }}>
+            Revenue Department (Income Tax CBDT) Record
           </p>
           {!rawView && (
             <div style={{ padding: '10px 14px', background: 'var(--color-warning-bg)', borderLeft: '3px solid var(--color-accent-amber)', borderRadius: '0 6px 6px 0', marginBottom: 14 }}>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#7a5800', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.5 }}>
-                🔒 <strong>Privacy Guard Enforced:</strong> The applicant's exact salary figure (<strong>incomeRange</strong>) was stripped at the connector boundary. The scholarship portal received only the qualifying categorical band (<strong>LOW</strong>).
+              <p style={{ margin: 0, fontSize: '0.75rem', color: '#7a5800', fontFamily: '"Inter", sans-serif', lineHeight: 1.5 }}>
+                🔒 <strong>Zero-Knowledge Privacy Guard Enforced:</strong> The citizen's exact income amount (<strong>incomeRange</strong>) was stripped at the connector boundary. The service received only the qualifying categorical band (<strong>LOW</strong>).
               </p>
             </div>
           )}
@@ -182,6 +215,10 @@ export function DataMinimizationToggle({ run }: Props) {
           })}
         </div>
       )}
+      {hasTransport && <DeptBlock title="Parivahan RTO Driving & Transport Record" fields={TRANSPORT_RAW_FIELDS} snapshot={run.transportSnapshot as any} rawView={rawView} />}
+      {hasPolice && <DeptBlock title="Police CCTNS National Clearance Record" fields={POLICE_RAW_FIELDS} snapshot={run.policeSnapshot as any} rawView={rawView} />}
+      {hasBanking && <DeptBlock title="Core Banking & NPCI Aadhaar-Seeded Record" fields={BANKING_RAW_FIELDS} snapshot={run.bankingSnapshot as any} rawView={rawView} />}
+      {hasWelfare && <DeptBlock title="Public Distribution System (PDS) Welfare Record" fields={WELFARE_RAW_FIELDS} snapshot={run.welfareSnapshot as any} rawView={rawView} />}
     </div>
   );
 }

@@ -36,7 +36,7 @@ services:
     build: ./packages/mock-revenue
     environment:
       PORT: 4003
-      REVENUE_FAIL_COUNTS: '{"PAN-LIKE-00003":1}'
+      REVENUE_FAIL_COUNTS: '{"SIM-PAN-000004":1}'
     expose: ["4003"]
 
   backend:

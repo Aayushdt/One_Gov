@@ -4,55 +4,43 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 4002;
 
-const STUDENTS = {
-  'UNIV-STU-00001': {
-    studentId: 'UNIV-STU-00001',
-    institutionName: 'National Institute of Technology, Trichy',
-    enrollmentStatus: 'ACTIVE',
-    courseLevel: 'UNDERGRADUATE',
-    program: 'B.Tech in Computer Science & Engineering',
-    academicYear: '2024-25 (Year 3)',
-    cgpa: '8.92 / 10.0',
-    source: 'EDUCATION_DEPARTMENT_V1',
-  },
-  'UNIV-STU-00002': {
-    studentId: 'UNIV-STU-00002',
-    institutionName: 'IIT Delhi',
-    enrollmentStatus: 'ACTIVE',
-    courseLevel: 'POSTGRADUATE',
-    program: 'M.Tech in Mechanical Systems Design',
-    academicYear: '2024-25 (Year 1)',
-    cgpa: '7.85 / 10.0',
-    source: 'EDUCATION_DEPARTMENT_V1',
-  },
-  'UNIV-STU-00003': {
-    studentId: 'UNIV-STU-00003',
-    institutionName: 'Delhi University',
-    enrollmentStatus: 'ACTIVE',
-    courseLevel: 'POSTGRADUATE',
-    program: 'M.Sc in Applied Mathematics & Statistics',
-    academicYear: '2024-25 (Year 2)',
-    cgpa: '9.10 / 10.0',
-    source: 'EDUCATION_DEPARTMENT_V1',
-  },
-  'UNIV-STU-00004': {
-    studentId: 'UNIV-STU-00004',
-    institutionName: 'Jadavpur University',
-    enrollmentStatus: 'ACTIVE',
-    courseLevel: 'UNDERGRADUATE',
-    program: 'B.A. (Hons) in Economics & Public Policy',
-    academicYear: '2024-25 (Year 2)',
-    cgpa: '8.40 / 10.0',
-    source: 'EDUCATION_DEPARTMENT_V1',
-  },
-};
+let DETERMINISTIC_50_CITIZENS;
+try {
+  const { generate50Citizens } = require('../../../scripts/deterministic_50_citizens');
+  DETERMINISTIC_50_CITIZENS = generate50Citizens();
+} catch (e) {
+  const { generate50Citizens } = require('./citizens');
+  DETERMINISTIC_50_CITIZENS = generate50Citizens();
+}
 
+const STUDENTS_BY_ID = {};
+const WELFARE_BY_ID = {};
+
+DETERMINISTIC_50_CITIZENS.forEach((c) => {
+  STUDENTS_BY_ID[c.educationRecord.studentId] = c.educationRecord;
+  // Legacy backward-compatibility indexes
+  if (c.num === 1) STUDENTS_BY_ID['UNIV-STU-00001'] = c.educationRecord;
+  if (c.num === 2) STUDENTS_BY_ID['UNIV-STU-00002'] = c.educationRecord;
+  if (c.num === 3) STUDENTS_BY_ID['UNIV-STU-00003'] = c.educationRecord;
+  if (c.num === 4) STUDENTS_BY_ID['UNIV-STU-00004'] = c.educationRecord;
+
+  WELFARE_BY_ID[c.welfareRecord.externalId] = c.welfareRecord;
+});
+
+// Education (NAD / Degree / University)
 app.get('/students/:externalId', (req, res) => {
-  const student = STUDENTS[req.params.externalId];
-  if (!student) return res.status(404).json({ error: 'NOT_FOUND' });
+  const student = STUDENTS_BY_ID[req.params.externalId];
+  if (!student) return res.status(404).json({ error: 'NOT_FOUND', department: 'EDUCATION' });
   res.json(student);
 });
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// Public Welfare & PDS (Subsidies / Ration)
+app.get('/welfare/:externalId', (req, res) => {
+  const welfare = WELFARE_BY_ID[req.params.externalId];
+  if (!welfare) return res.status(404).json({ error: 'NOT_FOUND', department: 'WELFARE' });
+  res.json(welfare);
+});
 
-app.listen(PORT, () => console.log(`mock-education running on :${PORT}`));
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'mock-education', records: Object.keys(STUDENTS_BY_ID).length }));
+
+app.listen(PORT, () => console.log(`mock-education running on :${PORT} with ${Object.keys(STUDENTS_BY_ID).length} records`));

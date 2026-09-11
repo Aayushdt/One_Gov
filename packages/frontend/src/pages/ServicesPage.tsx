@@ -4,100 +4,152 @@ import { AppShell } from '../components/layout/AppShell';
 import { Button } from '../components/ui/Button';
 import { api } from '../hooks/useApi';
 import { useAuthStore } from '../store/authStore';
-import { ArrowRight, Shield, GraduationCap, Banknote, Sparkles } from 'lucide-react';
+import { ArrowRight, Shield, GraduationCap, Banknote, Sparkles, Car, ShieldAlert, Landmark, Building, HeartHandshake } from 'lucide-react';
+
+const CONNECTED_SILOS = [
+  { name: 'UIDAI Identity', code: 'AADHAAR', icon: <Shield size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Income Tax CBDT', code: 'PAN', icon: <Banknote size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Higher Education NAD', code: 'EDU', icon: <GraduationCap size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Parivahan RTO', code: 'DL', icon: <Car size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Police CCTNS', code: 'POLICE', icon: <ShieldAlert size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Core Banking NPCI', code: 'DBT', icon: <Landmark size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Public Welfare PDS', code: 'RATION', icon: <HeartHandshake size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'Municipal Land Records', code: 'PROP', icon: <Building size={13} />, status: 'ONLINE', color: '#10b981' },
+];
 
 const SERVICES = [
   {
-    id: 'scholarship-2025',
-    title: 'National Merit Scholarship 2025',
-    category: 'Education & Welfare',
-    award: '₹75,000 / annum',
-    status: 'ACTIVE_APPLICATIONS_OPEN',
-    description: 'Direct Benefit Transfer (DBT) scholarship for enrolled students with household income under ₹3 LPA. Verification happens via consent-based inter-agency data sharing.',
+    id: 'SCHOLARSHIP',
+    title: 'National Merit STEM Fellowship 2025',
+    category: 'Higher Education & Research',
+    award: '₹75,000 / annum Direct Grant',
+    status: 'APPLICATIONS_OPEN',
+    description: 'Direct Benefit Transfer (DBT) grant for enrolled undergraduate and postgraduate students with household income band <= ₹3 LPA. Verifies demographics, student status, and tax band with zero document upload.',
     departments: [
-      { name: 'Identity Department', icon: <Shield size={12} />, purpose: 'Identity & Age verification' },
-      { name: 'Education Department', icon: <GraduationCap size={12} />, purpose: 'Enrollment & Academic standing' },
-      { name: 'Revenue Department', icon: <Banknote size={12} />, purpose: 'Income eligibility band validation' },
+      { name: 'UIDAI Identity Department', icon: <Shield size={12} />, purpose: 'Demographics & age validation' },
+      { name: 'Higher Education (NAD)', icon: <GraduationCap size={12} />, purpose: 'Enrolment & CGPA standing' },
+      { name: 'Revenue (CBDT/PAN)', icon: <Banknote size={12} />, purpose: 'Data-minimized income band' },
     ],
     highlight: true,
-    isOpen: true,
   },
   {
-    id: 'research-fellowship',
-    title: 'Postgraduate STEM Innovation Fellowship',
-    category: 'Higher Education & Research',
-    award: '₹42,000 / month + Contingency',
-    status: 'ROLLING_ADMISSIONS',
-    description: 'Research grant for masters and doctoral candidates conducting scientific research at recognised national universities.',
+    id: 'TRANSPORT',
+    title: 'Commercial Transport Fast-Pass & Smart Transit',
+    category: 'Road Transport & Logistics',
+    award: 'All-India Commercial Endorsement + FASTag Waiver',
+    status: 'INSTANT_VERIFICATION',
+    description: 'Instant multi-state commercial driving authorization with unified traffic compliance. Verifies valid Driving Licence, zero unpaid challans, police character clearance, and active banking KYC.',
     departments: [
-      { name: 'Identity Department', icon: <Shield size={12} />, purpose: 'Aadhaar / Citizen ID validation' },
-      { name: 'Education Department', icon: <GraduationCap size={12} />, purpose: 'Postgraduate enrolment verification' },
+      { name: 'UIDAI Identity Department', icon: <Shield size={12} />, purpose: 'Biometric UID tokenization' },
+      { name: 'Parivahan RTO', icon: <Car size={12} />, purpose: 'Driving licence validity & challans' },
+      { name: 'Police CCTNS', icon: <ShieldAlert size={12} />, purpose: 'Criminal background & FIR check' },
+      { name: 'Core Banking NPCI', icon: <Landmark size={12} />, purpose: 'e-KYC & Transit wallet link' },
     ],
-    isOpen: true,
+    highlight: false,
   },
   {
-    id: 'housing-grant',
-    title: 'First-Time Graduate Housing Subsidy',
-    category: 'Urban Welfare',
-    award: '₹60,000 one-time rental voucher',
-    status: 'ANNUAL_CYCLE',
-    description: 'Relocation subsidy for recent university graduates transitioning to metropolitan employment zones.',
+    id: 'WELFARE',
+    title: 'Social Security & Direct Benefit Transfer (DBT)',
+    category: 'Public Welfare & Social Justice',
+    award: '₹12,000 / annum Direct Subsidy + Ration Link',
+    status: 'ACTIVE_ROLLOUT',
+    description: 'Unified social protection assistance for priority households. Verifies low income band or BPL ration card status, accompanied by automated NPCI Aadhaar-seeded bank account routing.',
     departments: [
-      { name: 'Identity Department', icon: <Shield size={12} />, purpose: 'Age & domicile confirmation' },
-      { name: 'Revenue Department', icon: <Banknote size={12} />, purpose: 'First-time taxpayer status' },
+      { name: 'UIDAI Identity Department', icon: <Shield size={12} />, purpose: 'Aadhaar demographic matching' },
+      { name: 'Revenue (Income Tax)', icon: <Banknote size={12} />, purpose: 'Income band eligibility' },
+      { name: 'Public Welfare (PDS)', icon: <HeartHandshake size={12} />, purpose: 'Ration card & active schemes' },
+      { name: 'Core Banking NPCI', icon: <Landmark size={12} />, purpose: 'Aadhaar-seeded DBT deposit' },
     ],
-    isOpen: true,
+    highlight: false,
   },
 ];
 
 export function ServicesPage() {
   const navigate = useNavigate();
-  const { name, citizenId } = useAuthStore();
-  const [loading, setLoading] = React.useState(false);
+  const { name, onegovId, state } = useAuthStore();
+  const [loadingService, setLoadingService] = React.useState<string | null>(null);
 
-  const handleApply = async () => {
-    setLoading(true);
+  const handleApply = async (serviceId: string) => {
+    setLoadingService(serviceId);
     try {
-      const { runId } = await api.startWorkflow();
+      const { runId } = await api.startWorkflow(serviceId);
       navigate(`/apply/${runId}`);
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      setLoadingService(null);
     }
   };
 
   return (
     <AppShell>
-      <div style={{ maxWidth: '68rem', margin: '0 auto', padding: '48px 24px' }}>
+      <div style={{ maxWidth: '68rem', margin: '0 auto', padding: '40px 24px' }}>
         {/* Page header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20, marginBottom: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
           <div>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif' }}>
-              Citizen Digital Services Catalog
+              OneGov Universal Citizen Portal
             </span>
-            <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '2.25rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '8px 0 8px', lineHeight: 1.2 }}>
-              Government Services &amp; Grants
+            <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '2.25rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '6px 0 8px', lineHeight: 1.2 }}>
+              Government Services &amp; Schemes
             </h1>
             <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontFamily: '"Inter", system-ui, sans-serif' }}>
-              Welcome back, <strong style={{ color: 'var(--color-text-primary)' }}>{name}</strong> · Select a service to initiate verified data orchestration.
+              Welcome, <strong style={{ color: 'var(--color-text-primary)' }}>{name}</strong> {state ? `(${state})` : ''} · Select a service to initiate federated cross-agency verification.
             </p>
           </div>
 
-          <div style={{ padding: '12px 18px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-default)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--color-success)', boxShadow: '0 0 8px var(--color-success)' }} />
+          <div style={{ padding: '12px 18px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-default)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--color-success)', boxShadow: '0 0 10px var(--color-success)' }} />
             <div>
-              <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: '"Inter", sans-serif' }}>
-                Identity Federated
-              </p>
-              <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--color-text-tertiary)', fontFamily: '"JetBrains Mono", monospace' }}>
-                Citizen ID: {citizenId}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-success)', letterSpacing: '0.05em' }}>
+                  Federated Identity Active
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: '"JetBrains Mono", monospace' }}>
+                {onegovId}
               </p>
             </div>
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginBottom: 32 }} />
+        {/* 8 Connected Department Silos Bar */}
+        <div style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)', borderRadius: 10, padding: '16px 20px', marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-tertiary)' }}>
+              8 Interconnected Government Silos (Federated via OneGov ID)
+            </span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--color-success)', fontWeight: 600 }}>
+              All 8 Connectors Online
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+            {CONNECTED_SILOS.map((silo) => (
+              <div
+                key={silo.name}
+                style={{
+                  padding: '8px 10px',
+                  background: 'var(--color-bg-base)',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <span style={{ color: 'var(--color-accent-primary)' }}>{silo.icon}</span>
+                <div style={{ overflow: 'hidden' }}>
+                  <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                    {silo.name}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--color-text-tertiary)', fontFamily: '"JetBrains Mono", monospace' }}>
+                    {silo.code}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Services Grid */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -111,7 +163,6 @@ export function ServicesPage() {
                 padding: '28px',
                 position: 'relative',
                 boxShadow: srv.highlight ? 'var(--shadow-md)' : 'none',
-                transition: 'transform var(--duration-fast), box-shadow var(--duration-fast)',
               }}
             >
               {srv.highlight && (
@@ -134,7 +185,7 @@ export function ServicesPage() {
                     fontFamily: '"Inter", sans-serif',
                   }}
                 >
-                  <Sparkles size={12} /> Flagship Hackathon Flow
+                  <Sparkles size={12} /> Flagship Verification Flow
                 </div>
               )}
 
@@ -160,7 +211,7 @@ export function ServicesPage() {
 
                   <div>
                     <p style={{ margin: '0 0 8px', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif' }}>
-                      Required Inter-Agency Data Sources:
+                      Required Federated Inter-Agency Lookups:
                     </p>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {srv.departments.map((d) => (
@@ -188,19 +239,18 @@ export function ServicesPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', alignSelf: 'center', flexShrink: 0 }}>
-                  {srv.id === 'scholarship-2025' ? (
-                    <Button onClick={handleApply} disabled={loading} size="lg" style={{ whiteSpace: 'nowrap' }}>
-                      {loading ? 'Initiating Pipeline…' : 'Apply with Consent'}
-                      <ArrowRight size={16} />
-                    </Button>
-                  ) : (
-                    <Button onClick={handleApply} variant="secondary" disabled={loading} style={{ whiteSpace: 'nowrap' }}>
-                      Apply via GovLink
-                      <ArrowRight size={16} />
-                    </Button>
-                  )}
-                  <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif', textAlign: 'right' }}>
-                    Zero manual paper upload required
+                  <Button
+                    onClick={() => handleApply(srv.id)}
+                    disabled={loadingService !== null}
+                    variant={srv.highlight ? 'primary' : 'secondary'}
+                    size="lg"
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    {loadingService === srv.id ? 'Initiating Pipeline…' : 'Apply with Consent'}
+                    <ArrowRight size={16} />
+                  </Button>
+                  <p style={{ margin: '8px 0 0', fontSize: '0.72rem', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif', textAlign: 'right' }}>
+                    Zero physical paper upload
                   </p>
                 </div>
               </div>

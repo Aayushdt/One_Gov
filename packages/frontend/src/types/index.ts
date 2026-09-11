@@ -1,6 +1,28 @@
-export type DataCategory = 'IDENTITY' | 'EDUCATION' | 'INCOME';
+export type DataCategory =
+  | 'IDENTITY'
+  | 'EDUCATION'
+  | 'INCOME'
+  | 'TRANSPORT'
+  | 'POLICE'
+  | 'BANKING'
+  | 'WELFARE'
+  | 'MUNICIPAL';
+
 export type ConsentStatus = 'ACTIVE' | 'REVOKED' | 'EXPIRED';
-export type WorkflowState = 'AWAITING_CONSENT' | 'IDENTITY_VERIFY' | 'EDUCATION_VERIFY' | 'INCOME_VERIFY' | 'ELIGIBILITY_CALC' | 'SUBMITTED' | 'FAILED' | 'PENDING';
+
+export type WorkflowState =
+  | 'AWAITING_CONSENT'
+  | 'IDENTITY_VERIFY'
+  | 'EDUCATION_VERIFY'
+  | 'INCOME_VERIFY'
+  | 'TRANSPORT_VERIFY'
+  | 'POLICE_VERIFY'
+  | 'BANKING_VERIFY'
+  | 'WELFARE_VERIFY'
+  | 'ELIGIBILITY_CALC'
+  | 'SUBMITTED'
+  | 'FAILED'
+  | 'PENDING';
 
 export interface ConsentArtefact {
   id: string;
@@ -18,6 +40,7 @@ export interface ConsentArtefact {
 export interface WorkflowRun {
   id: string;
   citizenId: string;
+  serviceType?: string;
   state: WorkflowState;
   retryCount: number;
   lastError: string | null;
@@ -28,8 +51,22 @@ export interface WorkflowRun {
   identitySnapshot: IdentityRecord | null;
   educationSnapshot: EducationRecord | null;
   incomeSnapshot: IncomeRecord | null;
+  transportSnapshot: TransportRecord | null;
+  policeSnapshot: PoliceRecord | null;
+  bankingSnapshot: BankingRecord | null;
+  welfareSnapshot: WelfareRecord | null;
   consents: ConsentArtefact[];
   stateHistory: StateHistoryEntry[];
+  citizen?: {
+    id: string;
+    onegovId: string;
+    name: string;
+    email: string;
+    state?: string;
+    district?: string;
+    pincode?: string;
+    identityMap?: Record<string, string>;
+  };
 }
 
 export interface StateHistoryEntry {
@@ -54,7 +91,7 @@ export interface EducationRecord {
   verified: boolean;
   source: string;
   institution: string;
-  enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'UNKNOWN';
+  enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'UNKNOWN';
   program?: string;
   academicYear?: string;
   cgpa?: string;
@@ -68,6 +105,49 @@ export interface IncomeRecord {
   taxYear?: string;
   panMasked?: string;
   filingStatus?: string;
+}
+
+export interface TransportRecord {
+  verified: boolean;
+  source: string;
+  dlNumber: string;
+  dlStatus: 'VALID' | 'EXPIRED' | 'SUSPENDED';
+  cleanDrivingRecord: boolean;
+  unpaidChallansCount: number;
+  vehicleType?: string;
+}
+
+export interface PoliceRecord {
+  verified: boolean;
+  source: string;
+  clearanceStatus: 'CLEARED' | 'PENDING' | 'ADVERSE';
+  incidentCount: number;
+  jurisdictionStation?: string;
+}
+
+export interface BankingRecord {
+  verified: boolean;
+  source: string;
+  bankName: string;
+  maskedAccount: string;
+  kycStatus: 'VERIFIED' | 'OVERDUE' | 'FAILED';
+  dbtEnabled: boolean;
+}
+
+export interface WelfareRecord {
+  verified: boolean;
+  source: string;
+  bplStatus: boolean;
+  rationCardNumber: string;
+  activeSubsidies: string[];
+}
+
+export interface MunicipalRecord {
+  verified: boolean;
+  source: string;
+  propertyId: string;
+  propertyTaxClearance: boolean;
+  zone: string;
 }
 
 export interface AuditEntry {

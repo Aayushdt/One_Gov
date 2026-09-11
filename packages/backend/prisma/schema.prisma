@@ -14,11 +14,19 @@ datasource db {
 // ─── Citizens ──────────────────────────────────────────────────────────────
 
 model Citizen {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  createdAt    DateTime @default(now())
+  id             String   @id @default(uuid())
+  onegovId       String   @unique
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  dateOfBirth    String?
+  gender         String?
+  state          String?
+  district       String?
+  pincode        String?
+  primaryAddress String?
+  createdAt      DateTime @default(now())
 
   identityMap  IdentityMap?
   consents     ConsentArtefact[]
@@ -26,16 +34,21 @@ model Citizen {
   auditEntries AuditEntry[]
 }
 
-// ─── Identity Mapping Table ────────────────────────────────────────────────
+// ─── Identity Mapping Table (Federated Mapping Across 8 Depts) ─────────────
 
 model IdentityMap {
   id              String  @id @default(uuid())
   citizenId       String  @unique
   citizen         Citizen @relation(fields: [citizenId], references: [id])
 
-  identityDeptId  String
-  educationDeptId String
-  revenueDeptId   String
+  identityDeptId  String  // SIM-AADHAAR-XXXXXX
+  revenueDeptId   String  // SIM-PAN-XXXXXX
+  educationDeptId String  // SIM-EDU-XXXXXX
+  transportDeptId String? // SIM-DL-XXXXXX
+  policeDeptId    String? // SIM-POL-XXXXXX
+  bankingDeptId   String? // SIM-BANK-XXXXXX
+  welfareDeptId   String? // SIM-WEL-XXXXXX
+  municipalDeptId String? // SIM-PROP-XXXXXX
 }
 
 // ─── Consent Artefact — ONE ROW PER CATEGORY ──────────────────────────────
@@ -50,6 +63,11 @@ enum DataCategory {
   IDENTITY
   EDUCATION
   INCOME
+  TRANSPORT
+  POLICE
+  BANKING
+  WELFARE
+  MUNICIPAL
 }
 
 model ConsentArtefact {
@@ -78,6 +96,10 @@ enum WorkflowState {
   IDENTITY_VERIFY
   EDUCATION_VERIFY
   INCOME_VERIFY
+  TRANSPORT_VERIFY
+  POLICE_VERIFY
+  BANKING_VERIFY
+  WELFARE_VERIFY
   ELIGIBILITY_CALC
   SUBMITTED
   FAILED
@@ -88,6 +110,7 @@ model WorkflowRun {
   id             String        @id @default(uuid())
   citizenId      String
   citizen        Citizen       @relation(fields: [citizenId], references: [id])
+  serviceType    String        @default("SCHOLARSHIP")
   state          WorkflowState @default(AWAITING_CONSENT)
   retryCount     Int           @default(0)
   lastError      String?
@@ -99,6 +122,10 @@ model WorkflowRun {
   identitySnapshot  Json?
   educationSnapshot Json?
   incomeSnapshot    Json?
+  transportSnapshot Json?
+  policeSnapshot    Json?
+  bankingSnapshot   Json?
+  welfareSnapshot   Json?
 
   consents     ConsentArtefact[]
   stateHistory WorkflowStateHistory[]
