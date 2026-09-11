@@ -22,9 +22,11 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/services" element={<RequireAuth><ServicesPage /></RequireAuth>} />
         <Route path="/apply/:runId" element={<RequireAuth><ConsentPage /></RequireAuth>} />
+        <Route path="/consent/:runId" element={<RequireAuth><ConsentPage /></RequireAuth>} />
         <Route path="/status/:runId" element={<RequireAuth><StatusPage /></RequireAuth>} />
         <Route path="/result/:runId" element={<RequireAuth><ResultPage /></RequireAuth>} />
         <Route path="/audit" element={<RequireAuth><AuditPage /></RequireAuth>} />
+        <Route path="*" element={<Navigate to="/services" replace />} />
       </Routes>
     </BrowserRouter>
   );
