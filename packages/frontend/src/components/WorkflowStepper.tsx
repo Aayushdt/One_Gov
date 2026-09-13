@@ -16,6 +16,7 @@ const SERVICE_STEPS: Record<string, { state: WorkflowState; label: string; agenc
     { state: 'TRANSPORT_VERIFY', label: 'Driving Licence & Challan Check', agency: 'Parivahan RTO Silo', icon: Car },
     { state: 'POLICE_VERIFY', label: 'Character & Crime Clearance', agency: 'Police CCTNS Registry', icon: ShieldAlert },
     { state: 'BANKING_VERIFY', label: 'e-KYC & FASTag Transit Wallet', agency: 'Core Banking NPCI', icon: Landmark },
+    { state: 'MUNICIPAL_VERIFY', label: 'Property Tax & Address Clearance', agency: 'Municipal Land Registry', icon: ShieldCheck },
     { state: 'ELIGIBILITY_CALC', label: 'Commercial Transit Endorsement', agency: 'OneGov Decision Engine', icon: Award },
     { state: 'SUBMITTED', label: 'Digital Permit Generated', agency: 'OneGov Core Orchestrator', icon: CheckCircle2 },
   ],

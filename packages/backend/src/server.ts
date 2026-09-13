@@ -6,6 +6,8 @@ import { authRoutes } from './gateway/auth.routes';
 import { workflowRoutes } from './gateway/workflow.routes';
 import { consentRoutes } from './gateway/consent.routes';
 import { auditRoutes } from './gateway/audit.routes';
+import { demoRoutes } from './gateway/demo.routes';
+import { healthRoutes } from './gateway/health.routes';
 import { startWorker } from './workflow/queue';
 
 const app = Fastify({ logger: { level: 'info' } });
@@ -23,9 +25,11 @@ async function bootstrap() {
 
   // Routes
   await app.register(authRoutes, { prefix: '/api/auth' });
+  await app.register(demoRoutes, { prefix: '/api/auth' });
   await app.register(workflowRoutes, { prefix: '/api/workflow' });
   await app.register(consentRoutes, { prefix: '/api/consent' });
   await app.register(auditRoutes, { prefix: '/api/audit' });
+  await app.register(healthRoutes, { prefix: '/api/health' });
 
   // Start BullMQ worker
   startWorker();

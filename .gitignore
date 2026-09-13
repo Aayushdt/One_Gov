@@ -12,12 +12,16 @@ node_modules/
 *.env
 !.env.example
 
+# Private demo credentials reference (exported locally for presenter)
+DEMO_CREDENTIALS.md
+
 # Build outputs
 dist/
 build/
 out/
 .next/
 *.tsbuildinfo
+coverage/
 
 # Logs
 logs/

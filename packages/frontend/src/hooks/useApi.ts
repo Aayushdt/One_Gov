@@ -28,7 +28,6 @@ export const api = {
       citizenId: string;
       onegovId: string;
       name: string;
-      email: string;
       state?: string;
       district?: string;
       pincode?: string;
@@ -37,11 +36,37 @@ export const api = {
       token: string;
     }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
 
+  register: (data: { name: string; email: string; password: string; state?: string; district?: string }) =>
+    req<{
+      citizenId: string;
+      onegovId: string;
+      name: string;
+      state?: string;
+      district?: string;
+      pincode?: string;
+      primaryAddress?: string;
+      identityMap?: Record<string, string>;
+      token: string;
+    }>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+
+  demoLogin: (onegovId: string) =>
+    req<{
+      citizenId: string;
+      onegovId: string;
+      name: string;
+      state?: string;
+      district?: string;
+      pincode?: string;
+      primaryAddress?: string;
+      identityMap?: Record<string, string>;
+      token: string;
+    }>('/api/auth/demo-login', { method: 'POST', body: JSON.stringify({ onegovId }) }),
+
   getMe: () =>
     req<any>('/api/auth/me'),
 
   getCitizens: () =>
-    req<{ citizens: any[] }>('/api/auth/citizens'),
+    req<{ citizens: Array<{ id: string; onegovId: string; name: string; state?: string; district?: string }> }>('/api/auth/citizens'),
 
   startWorkflow: (serviceType: string = 'SCHOLARSHIP') =>
     req<{ runId: string; serviceType: string }>('/api/workflow/start', {

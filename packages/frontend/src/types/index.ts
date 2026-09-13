@@ -18,6 +18,7 @@ export type WorkflowState =
   | 'TRANSPORT_VERIFY'
   | 'POLICE_VERIFY'
   | 'BANKING_VERIFY'
+  | 'MUNICIPAL_VERIFY'
   | 'WELFARE_VERIFY'
   | 'ELIGIBILITY_CALC'
   | 'SUBMITTED'
@@ -55,6 +56,7 @@ export interface WorkflowRun {
   policeSnapshot: PoliceRecord | null;
   bankingSnapshot: BankingRecord | null;
   welfareSnapshot: WelfareRecord | null;
+  municipalSnapshot: MunicipalRecord | null;
   consents: ConsentArtefact[];
   stateHistory: StateHistoryEntry[];
   citizen?: {

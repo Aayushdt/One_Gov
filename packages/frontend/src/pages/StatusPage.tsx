@@ -18,8 +18,8 @@ const SERVICE_COMPLETION_INFO: Record<string, { count: number; departments: stri
     departments: 'Identity, University Enrollment, and Income Band',
   },
   TRANSPORT: {
-    count: 4,
-    departments: 'Identity, Driving Licence, Police Clearance, and Banking KYC',
+    count: 5,
+    departments: 'Identity, Driving Licence, Police Clearance, Banking KYC, and Municipal Property',
   },
   WELFARE: {
     count: 4,
@@ -184,11 +184,15 @@ export function StatusPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <ShieldAlert size={20} color="var(--color-error)" />
               <h2 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.35rem', fontWeight: 600, color: 'var(--color-error)', margin: 0 }}>
-                Workflow Blocked by Consent / Policy Guard
+                {run.failureReason === 'UNLINKED_FEDERATION_RECORD'
+                  ? 'Verification Halted — Department Federation Required'
+                  : 'Workflow Blocked by Consent / Policy Guard'}
               </h2>
             </div>
             <p style={{ margin: '0 0 20px', fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.65 }}>
-              {run.failureReason?.startsWith('CONSENT_REVOKED')
+              {run.failureReason === 'UNLINKED_FEDERATION_RECORD'
+                ? 'Department Records Not Linked: This citizen account was self-registered and has no linked records in the federated IdentityMap (UIDAI Aadhaar, CBDT PAN, NAD Higher Education, etc.). In GovLink’s federated architecture, cross-department data minimization requires an active IdentityMap. To experience full end-to-end multi-agency verification, please sign in with one of the 50 Reference Personas using credentials from DEMO_CREDENTIALS.md.'
+                : run.failureReason?.startsWith('CONSENT_REVOKED')
                 ? `Data transfer was blocked immediately because consent for ${run.failureReason.split(':')[1]} was revoked by the applicant.`
                 : run.failureReason === 'MAX_RETRIES_EXCEEDED'
                 ? 'The simulated revenue service did not respond after 3 automated attempts.'

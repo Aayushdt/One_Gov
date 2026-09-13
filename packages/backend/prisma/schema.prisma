@@ -99,6 +99,7 @@ enum WorkflowState {
   TRANSPORT_VERIFY
   POLICE_VERIFY
   BANKING_VERIFY
+  MUNICIPAL_VERIFY
   WELFARE_VERIFY
   ELIGIBILITY_CALC
   SUBMITTED
@@ -126,6 +127,7 @@ model WorkflowRun {
   policeSnapshot    Json?
   bankingSnapshot   Json?
   welfareSnapshot   Json?
+  municipalSnapshot Json?
 
   consents     ConsentArtefact[]
   stateHistory WorkflowStateHistory[]

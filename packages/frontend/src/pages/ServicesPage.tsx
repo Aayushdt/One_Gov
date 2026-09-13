@@ -66,7 +66,7 @@ const SERVICES = [
 
 export function ServicesPage() {
   const navigate = useNavigate();
-  const { name, onegovId, state } = useAuthStore();
+  const { name, onegovId, state, identityMap } = useAuthStore();
   const [loadingService, setLoadingService] = React.useState<string | null>(null);
 
   const handleApply = async (serviceId: string) => {
@@ -102,8 +102,14 @@ export function ServicesPage() {
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--color-success)', boxShadow: '0 0 10px var(--color-success)' }} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-success)', letterSpacing: '0.05em' }}>
-                  Federated Identity Active
+                <span style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: identityMap ? 'var(--color-success)' : 'var(--color-accent-amber)',
+                  letterSpacing: '0.05em',
+                }}>
+                  {identityMap ? 'Federated Identity Active' : 'Self-Registered (Unlinked)'}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: '"JetBrains Mono", monospace' }}>
@@ -112,6 +118,29 @@ export function ServicesPage() {
             </div>
           </div>
         </div>
+
+        {!identityMap && (
+          <div style={{
+            marginBottom: 24,
+            padding: '14px 18px',
+            background: 'rgba(234, 179, 8, 0.08)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+            <ShieldAlert size={20} color="#ca8a04" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: '0 0 2px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                Self-Registered Account · Department Records Unlinked
+              </p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
+                This account was created via self-registration and is not yet federated with upstream departmental databases (UIDAI, CBDT, NAD). You can initiate applications to test workflow execution, where the system will cleanly report that no federated records exist. To test full multi-agency approval paths, sign in using credentials from <code>DEMO_CREDENTIALS.md</code>.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 8 Connected Department Silos Bar */}
         <div style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border-subtle)', borderRadius: 10, padding: '16px 20px', marginBottom: 32 }}>

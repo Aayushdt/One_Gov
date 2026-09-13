@@ -34,7 +34,6 @@ export async function workflowRoutes(app: FastifyInstance) {
             id: true,
             onegovId: true,
             name: true,
-            email: true,
             state: true,
             district: true,
             pincode: true,

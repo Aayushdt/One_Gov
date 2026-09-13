@@ -3,6 +3,7 @@ import { prisma } from '../config/db';
 import {
   identityConnector, educationConnector, revenueConnector,
   transportConnector, policeConnector, bankingConnector, welfareConnector,
+  municipalConnector,
   ConsentViolationError, ConnectorError
 } from '../connectors/connectors';
 import { auditService } from '../audit/audit.service';
@@ -30,7 +31,30 @@ class WorkflowEngine {
           break;
 
         case WorkflowState.IDENTITY_VERIFY: {
-          const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
+          const map = await prisma.identityMap.findUnique({ where: { citizenId: run.citizenId } });
+          if (!map || !map.identityDeptId) {
+            await delay(400);
+            await prisma.workflowRun.update({
+              where: { id: runId },
+              data: {
+                state: WorkflowState.FAILED,
+                failureReason: 'UNLINKED_FEDERATION_RECORD',
+                lastError: 'Self-registered citizen account is not linked to departmental registries (UIDAI Aadhaar / CBDT PAN / NAD). In GovLink, multi-agency verification requires an active federated IdentityMap. Please test using a seeded reference persona from DEMO_CREDENTIALS.md.',
+              },
+            });
+            await auditService.log({
+              citizenId: run.citizenId,
+              eventType: 'WORKFLOW_STATE_CHANGE',
+              actor: 'system',
+              payload: {
+                runId,
+                fromState: run.state,
+                toState: 'FAILED',
+                reason: 'UNLINKED_FEDERATION_RECORD: Citizen has no linked departmental records in federated IdentityMap',
+              },
+            });
+            return;
+          }
           const identity = await identityConnector.fetchAndNormalize(map.identityDeptId, runId, run.citizenId);
           await prisma.workflowRun.update({ where: { id: runId }, data: { identitySnapshot: identity as any } });
           await delay(800);
@@ -112,6 +136,23 @@ class WorkflowEngine {
           const banking = await bankingConnector.fetchAndNormalize(bankingId, runId, run.citizenId);
           await prisma.workflowRun.update({ where: { id: runId }, data: { bankingSnapshot: banking as any } });
           await delay(800);
+          // TRANSPORT flow continues to property-encumbrance check; others go straight to eligibility
+          if (serviceType === 'TRANSPORT') {
+            await this.transitionTo(run, WorkflowState.MUNICIPAL_VERIFY);
+          } else {
+            await this.transitionTo(run, WorkflowState.ELIGIBILITY_CALC);
+          }
+          await this.advance(runId);
+          break;
+        }
+
+        case WorkflowState.MUNICIPAL_VERIFY: {
+          // Property tax clearance check — currently only required by TRANSPORT flow
+          const map = await prisma.identityMap.findUniqueOrThrow({ where: { citizenId: run.citizenId } });
+          const municipalId = map.municipalDeptId || `SIM-PROP-${run.citizenId.slice(-6)}`;
+          const municipal = await municipalConnector.fetchAndNormalize(municipalId, runId, run.citizenId);
+          await prisma.workflowRun.update({ where: { id: runId }, data: { municipalSnapshot: municipal as any } });
+          await delay(800);
           await this.transitionTo(run, WorkflowState.ELIGIBILITY_CALC);
           await this.advance(runId);
           break;
@@ -130,8 +171,19 @@ class WorkflowEngine {
           let reason = 'CRITERIA_NOT_MET';
 
           if (serviceType === 'TRANSPORT') {
-            eligible = transport?.dlStatus === 'VALID' && transport?.cleanDrivingRecord === true && police?.clearanceStatus === 'CLEARED' && banking?.kycStatus === 'VERIFIED';
-            reason = eligible ? 'TRANSPORT_CLEARANCE_APPROVED' : transport?.dlStatus !== 'VALID' ? 'DRIVING_LICENCE_EXPIRED' : transport?.cleanDrivingRecord !== true ? 'UNPAID_TRAFFIC_CHALLANS' : police?.clearanceStatus !== 'CLEARED' ? 'POLICE_CLEARANCE_PENDING' : 'BANK_KYC_REQUIRED';
+            const municipal = freshRun.municipalSnapshot as any;
+            eligible = transport?.dlStatus === 'VALID' && transport?.cleanDrivingRecord === true && police?.clearanceStatus === 'CLEARED' && banking?.kycStatus === 'VERIFIED' && municipal?.propertyTaxClearance === true;
+            reason = eligible
+              ? 'TRANSPORT_CLEARANCE_APPROVED'
+              : transport?.dlStatus !== 'VALID'
+              ? 'DRIVING_LICENCE_EXPIRED'
+              : transport?.cleanDrivingRecord !== true
+              ? 'UNPAID_TRAFFIC_CHALLANS'
+              : police?.clearanceStatus !== 'CLEARED'
+              ? 'POLICE_CLEARANCE_PENDING'
+              : municipal?.propertyTaxClearance !== true
+              ? 'PROPERTY_TAX_ENCUMBRANCE'
+              : 'BANK_KYC_REQUIRED';
           } else if (serviceType === 'WELFARE') {
             eligible = (income?.eligibilityBand === 'LOW' || welfare?.bplStatus === true) && banking?.dbtEnabled === true;
             reason = eligible ? 'WELFARE_BENEFIT_APPROVED' : banking?.dbtEnabled !== true ? 'DBT_BANK_LINK_REQUIRED' : 'INCOME_CEILING_EXCEEDED';

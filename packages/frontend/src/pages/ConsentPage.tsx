@@ -70,7 +70,7 @@ const CATEGORY_DEFINITIONS: Record<DataCategory, { label: string; purpose: strin
 export function ConsentPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
-  const { name, onegovId } = useAuthStore();
+  const { name, onegovId, identityMap } = useAuthStore();
   const [serviceType, setServiceType] = React.useState<string>('SCHOLARSHIP');
   const [categories, setCategories] = React.useState<DataCategory[]>(['IDENTITY', 'EDUCATION', 'INCOME']);
   const [enabled, setEnabled] = React.useState<Record<string, boolean>>({ IDENTITY: true, EDUCATION: true, INCOME: true });
@@ -79,14 +79,12 @@ export function ConsentPage() {
 
   React.useEffect(() => {
     if (runId) {
-      api.getWorkflow(runId).then((data) => {
-        const sType = data.serviceType || 'SCHOLARSHIP';
-        setServiceType(sType);
-
+      api.getWorkflow(runId).then((run) => {
+        setServiceType(run.serviceType || 'SCHOLARSHIP');
         let cats: DataCategory[] = ['IDENTITY', 'EDUCATION', 'INCOME'];
-        if (sType === 'TRANSPORT') {
-          cats = ['IDENTITY', 'TRANSPORT', 'POLICE', 'BANKING'];
-        } else if (sType === 'WELFARE') {
+        if (run.serviceType === 'TRANSPORT') {
+          cats = ['IDENTITY', 'TRANSPORT', 'POLICE', 'BANKING', 'MUNICIPAL'];
+        } else if (run.serviceType === 'WELFARE') {
           cats = ['IDENTITY', 'INCOME', 'WELFARE', 'BANKING'];
         }
 
@@ -131,6 +129,24 @@ export function ConsentPage() {
             OneGov enforces explicit, category-specific citizen consent before retrieving records from government silos. You may revoke consent at any moment.
           </p>
         </div>
+
+        {!identityMap && (
+          <div style={{
+            marginBottom: 20,
+            padding: '12px 16px',
+            background: 'rgba(234, 179, 8, 0.08)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+          }}>
+            <AlertTriangle size={16} color="#ca8a04" style={{ flexShrink: 0, marginTop: 2 }} />
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
+              <strong>Self-Registered Account:</strong> This account does not have an active IdentityMap linked to simulated department servers. Authorizing consent will run the workflow orchestration up to the identity verification stage, where the system will cleanly report that no federated government records exist.
+            </p>
+          </div>
+        )}
 
         <div style={{ borderTop: '1px solid var(--color-border-subtle)', borderBottom: '1px solid var(--color-border-subtle)', marginBottom: 24 }}>
           <div style={{ padding: '10px 0', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
