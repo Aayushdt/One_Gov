@@ -1,6 +1,22 @@
 import { createHash } from 'crypto';
 import { prisma } from '../config/db';
 
+// AUDIT CHAIN DESIGN NOTE (2026-09-14):
+// payloadRaw is the exact string SHA-256 hashed into each chain link. It must
+// never be modified after insertion — doing so breaks verifyChain() for all
+// subsequent entries in that citizen's chain.
+//
+// PII in payloadRaw (pre-fix): Before 2026-09-14, CONNECTOR_SUCCESS events
+// embedded the full normalized CDM fragment (name, dob, dlNumber, etc.) into
+// payload/payloadRaw. This baked personal data into an immutable hash chain,
+// conflicting with future erasure/retention requirements.
+//
+// Fix applied: connectors.ts now logs only { department, cdmVerified: true,
+// cdmCategory } for CONNECTOR_SUCCESS. Existing affected entries are marked
+// legacyPayload = true by scripts/migrate_audit_legacy_payload.ts. Their
+// payloadRaw hashes remain valid and verifyChain() still passes for them.
+// All new entries are legacyPayload = false and contain no PII in payloadRaw.
+
 export type AuditEventType =
   | 'CITIZEN_LOGIN'
   | 'CONSENT_GRANTED'
@@ -19,6 +35,10 @@ class AuditService {
     const payloadRaw = JSON.stringify(params.payload);
 
     return prisma.$transaction(async (tx) => {
+      // Transaction advisory lock guarantees absolute serialization even for genesis entries
+      // where row-level FOR UPDATE finds 0 rows.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${params.citizenId}))`;
+
       // Lock the citizen's last entry to prevent race conditions
       const lastEntries = await tx.$queryRaw<{ seq: number; hash: string }[]>`
         SELECT seq, hash FROM "AuditEntry"
@@ -43,6 +63,9 @@ class AuditService {
           payloadRaw,
           prevHash,
           hash,
+          // legacyPayload defaults to false via schema column default.
+          // After running the Prisma migration and `prisma generate`, this field
+          // can be set explicitly here if needed. The column default is authoritative.
         },
       });
     });

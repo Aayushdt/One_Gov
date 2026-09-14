@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "services": "Services",
+    "myConsents": "My Consents",
+    "auditTrail": "Audit Trail",
+    "myHistory": "Plain History",
+    "ops": "Ops",
+    "signOut": "Sign out"
+  },
+  "audit": {
+    "citizenLogin": "Citizen logged in securely using verified credentials.",
+    "consentGranted": "Consent was granted for {{category}} to process application run {{runId}}…",
+    "consentRevoked": "Consent was revoked for {{category}} on application run {{runId}}…",
+    "connectorCalled": "Federated gateway queried the {{department}} registry (attempt {{attempt}}).",
+    "connectorSuccess": "Successfully retrieved and verified normalized record from {{department}}.",
+    "connectorFailed": "Query to {{department}} encountered an issue: {{error}}.",
+    "workflowStateChange": "Application workflow transitioned from {{fromState}} to {{toState}} state.",
+    "eligibilityResult": "Eligibility evaluation completed: {{reason}} (Eligible: {{eligible}}).",
+    "dataAccessed": "System processed {{category}} in compliance with minimization constraints.",
+    "genericEvent": "System recorded event: {{eventType}}."
+  },
+  "dashboard": {
+    "title": "Unified Services Dashboard",
+    "subtitle": "Track all your citizen welfare, license, and fellowship applications in one place",
+    "newApp": "New Application",
+    "total": "Total Applications",
+    "eligible": "Deemed Eligible",
+    "completed": "Submitted / Complete",
+    "inProgress": "In Progress",
+    "search": "Search by scheme or run ID...",
+    "filterAll": "ALL",
+    "filterSubmitted": "SUBMITTED",
+    "filterActive": "ACTIVE",
+    "filterFailed": "FAILED"
+  },
+  "offline": {
+    "banner": "You are currently offline. Showing cached information. Network requests will resume when reconnected."
+  }
+}

@@ -1,27 +1,31 @@
 # Dependencies
-node_modules/
+node_modules
+**/node_modules
 .pnp/
 .pnp.js
 
 # Environment variables & secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.env
+.env.*
 !.env.example
+*.pem
+*.key
+*.cert
+*.crt
 
 # Private demo credentials reference (exported locally for presenter)
 DEMO_CREDENTIALS.md
 
 # Build outputs
 dist/
+*/dist/
 build/
+*/build/
 out/
 .next/
 *.tsbuildinfo
 coverage/
+.nyc_output/
 
 # Logs
 logs/
@@ -38,7 +42,7 @@ lerna-debug.log*
 *.db
 pgdata/
 
-# IDE & Editor files
+# IDE, Editor & OS files
 .vscode/
 .idea/
 *.suo
@@ -46,11 +50,16 @@ pgdata/
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
 
-# Temporary & cache files
+# Agent & temporary scratch caches
 .cache/
 .parcel-cache/
 .temp/
 .tmp/
+.gemini/
+.antigravity/
+.agents/

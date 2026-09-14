@@ -26,12 +26,21 @@ model Citizen {
   district       String?
   pincode        String?
   primaryAddress String?
+  role           String   @default("CITIZEN") // "CITIZEN" | "ADMIN"
   createdAt      DateTime @default(now())
 
-  identityMap  IdentityMap?
-  consents     ConsentArtefact[]
-  workflows    WorkflowRun[]
-  auditEntries AuditEntry[]
+  identityMap      IdentityMap?
+  consents         ConsentArtefact[]
+  guardianConsents ConsentArtefact[]      @relation("GuardianConsents")
+  guardianOf       GuardianRelationship[] @relation("GuardianOf")
+  dependentOf      GuardianRelationship[] @relation("DependentOf")
+  notifications    Notification[]
+  workflows        WorkflowRun[]
+  certificates     EligibilityCertificate[]
+  exports          DataExportRequest[]
+  appeals          Appeal[]
+  grievances       GrievanceFlag[]
+  auditEntries     AuditEntry[]
 }
 
 // ─── Identity Mapping Table (Federated Mapping Across 8 Depts) ─────────────
@@ -82,11 +91,43 @@ model ConsentArtefact {
   status        ConsentStatus @default(ACTIVE)
   revokedAt     DateTime?
 
+  maxUses       Int?          // null = unlimited
+  useCount      Int           @default(0)
+  guardianId    String?       // citizenId of the guardian who granted
+  guardian      Citizen?      @relation("GuardianConsents", fields: [guardianId], references: [id])
+
   workflowRunId String
   workflowRun   WorkflowRun   @relation(fields: [workflowRunId], references: [id])
 
   @@unique([workflowRunId, category])
   @@index([citizenId, category, status])
+  @@index([citizenId, status, expiresAt])
+}
+
+model GuardianRelationship {
+  id          String    @id @default(uuid())
+  guardianId  String
+  guardian    Citizen   @relation("GuardianOf", fields: [guardianId], references: [id])
+  dependentId String
+  dependent   Citizen   @relation("DependentOf", fields: [dependentId], references: [id])
+  verifiedAt  DateTime  @default(now())
+  expiresAt   DateTime?
+
+  @@unique([guardianId, dependentId])
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  citizenId  String
+  citizen    Citizen   @relation(fields: [citizenId], references: [id])
+  type       String    // "WORKFLOW_COMPLETE" | "CONSENT_EXPIRING" | "CONSENT_EXPIRED"
+  title      String
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+  metadata   Json?     // { runId?, category?, eligibleResult? }
+
+  @@index([citizenId, readAt])
 }
 
 // ─── Workflow State Machine ────────────────────────────────────────────────
@@ -105,6 +146,7 @@ enum WorkflowState {
   SUBMITTED
   FAILED
   PENDING
+  CONNECTOR_STEP
 }
 
 model WorkflowRun {
@@ -129,8 +171,84 @@ model WorkflowRun {
   welfareSnapshot   Json?
   municipalSnapshot Json?
 
+  retentionAppliedAt DateTime?
+
   consents     ConsentArtefact[]
   stateHistory WorkflowStateHistory[]
+  certificate  EligibilityCertificate?
+  appeals      Appeal[]
+}
+
+// ─── Appeals / Reconsideration Flow (Item 9) ───────────────────────────────
+
+model Appeal {
+  id               String       @id @default(uuid())
+  runId            String
+  run              WorkflowRun  @relation(fields: [runId], references: [id])
+  citizenId        String
+  citizen          Citizen      @relation(fields: [citizenId], references: [id])
+  disputedCategory DataCategory
+  reason           String
+  evidenceUrl      String?
+  status           String       @default("SUBMITTED") // "SUBMITTED" | "UNDER_REVIEW" | "UPHELD" | "DISMISSED"
+  adminNote        String?
+  submittedAt      DateTime     @default(now())
+  resolvedAt       DateTime?
+
+  @@index([citizenId, status])
+  @@index([runId])
+}
+
+// ─── Citizen Grievance Flagging (Item 13) ──────────────────────────────────
+
+model GrievanceFlag {
+  id           String     @id @default(uuid())
+  auditEntryId String
+  auditEntry   AuditEntry @relation(fields: [auditEntryId], references: [id])
+  citizenId    String
+  citizen      Citizen    @relation(fields: [citizenId], references: [id])
+  reason       String
+  status       String     @default("OPEN") // "OPEN" | "RESOLVED" | "DISMISSED"
+  adminNote    String?
+  flaggedAt    DateTime   @default(now())
+  resolvedAt   DateTime?
+
+  @@index([citizenId, status])
+  @@index([auditEntryId])
+}
+
+// ─── Cryptographically Verifiable Eligibility Certificate (Item 7) ─────────
+
+model EligibilityCertificate {
+  id          String      @id @default(uuid())
+  runId       String      @unique
+  run         WorkflowRun @relation(fields: [runId], references: [id])
+  citizenId   String
+  citizen     Citizen     @relation(fields: [citizenId], references: [id])
+  payload     Json        // { citizenName, serviceType, eligibleResult, issuedAt, expiresAt }
+  signature   String      // base64
+  algorithm   String      @default("Ed25519")
+  issuedAt    DateTime    @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  @@index([citizenId])
+}
+
+// ─── Citizen Data Portability & GDPR / DPDP Export (Item 8) ────────────────
+
+model DataExportRequest {
+  id          String    @id @default(uuid())
+  citizenId   String
+  citizen     Citizen   @relation(fields: [citizenId], references: [id])
+  status      String    @default("PENDING") // "PENDING" | "PROCESSING" | "READY" | "FAILED"
+  downloadUrl String?
+  fileSize    Int?
+  data        Json?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([citizenId, status])
 }
 
 model WorkflowStateHistory {
@@ -144,20 +262,84 @@ model WorkflowStateHistory {
 }
 
 // ─── Audit Trail — Per-Citizen Hash Chain ─────────────────────────────────
+//
+// DESIGN NOTE (2026-09-14): AuditEntry rows written before the PII-strip fix
+// (see connectors.ts CONNECTOR_SUCCESS logging) contained full CDM fragments
+// (name, dob, dlNumber, rationCardNumber, maskedAccount, etc.) inside payloadRaw,
+// which is the string that gets SHA-256 hashed into the chain. Those entries are
+// marked legacyPayload = true by the one-time migration script
+// (scripts/migrate_audit_legacy_payload.ts). The hash chain for legacy entries
+// remains valid and verifiable as-is — payloadRaw is NOT rewritten, so hashes
+// are not broken. All new CONNECTOR_SUCCESS entries log only
+// { department, cdmVerified: true, cdmCategory } and are marked legacyPayload = false.
 
 model AuditEntry {
-  id         String   @id @default(uuid())
-  seq        Int
-  citizenId  String
-  citizen    Citizen  @relation(fields: [citizenId], references: [id])
-  eventType  String
-  actor      String
-  payload    Json
-  payloadRaw String
-  prevHash   String
-  hash       String
-  createdAt  DateTime @default(now())
+  id            String          @id @default(uuid())
+  seq           Int
+  citizenId     String
+  citizen       Citizen         @relation(fields: [citizenId], references: [id])
+  eventType     String
+  actor         String
+  payload       Json
+  payloadRaw    String
+  prevHash      String
+  hash          String
+  legacyPayload Boolean         @default(false) // true = written before PII-strip fix; contains CDM data in payloadRaw
+  createdAt     DateTime        @default(now())
+  grievances    GrievanceFlag[]
 
   @@unique([citizenId, seq])
   @@index([citizenId, seq])
+}
+
+// ─── Connector Registry & Data-Driven Workflow Engine ──────────────────────
+
+model ConnectorManifest {
+  id          String       @id @default(uuid())
+  slug        String       @unique // "identity-uidai", "revenue-cbdt"
+  category    DataCategory
+  baseUrl     String
+  authMethod  String       @default("none") // "none" | "api-key" | "oauth2"
+  authConfig  Json?        // { header, secret, apiKey, rateLimit }
+  fieldSchema Json         // JSON Schema of the expected response
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ServiceDefinition {
+  id               String         @id @default(uuid())
+  serviceType      String         @unique // "SCHOLARSHIP" | "TRANSPORT" | "WELFARE"
+  displayName      String
+  steps            Json           // ordered array: [{order, state, connectorSlug, dataCategory}]
+  eligibilityRules Json           // the logic currently hardcoded in ELIGIBILITY_CALC
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  workflowSteps    WorkflowStep[]
+}
+
+model WorkflowStep {
+  id            String            @id @default(uuid())
+  serviceDefId  String
+  serviceDef    ServiceDefinition @relation(fields: [serviceDefId], references: [id], onDelete: Cascade)
+  order         Int
+  stateName     String            // mirrors WorkflowState enum values or custom state
+  connectorSlug String
+  category      DataCategory
+
+  @@unique([serviceDefId, order])
+}
+
+// ─── Operational Metrics & Resilience ──────────────────────────────────────
+
+model ConnectorMetric {
+  id            String   @id @default(uuid())
+  connectorSlug String
+  eventType     String   // "SUCCESS" | "FAILURE" | "RETRY" | "CIRCUIT_OPEN"
+  durationMs    Int?
+  statusCode    Int?
+  recordedAt    DateTime @default(now())
+
+  @@index([connectorSlug, recordedAt])
 }

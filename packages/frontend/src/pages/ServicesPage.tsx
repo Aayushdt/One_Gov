@@ -68,6 +68,39 @@ export function ServicesPage() {
   const navigate = useNavigate();
   const { name, onegovId, state, identityMap } = useAuthStore();
   const [loadingService, setLoadingService] = React.useState<string | null>(null);
+  const [servicesList, setServicesList] = React.useState(SERVICES);
+
+  React.useEffect(() => {
+    api.getServices()
+      .then((res) => {
+        if (res.services && res.services.length > 0) {
+          const merged = res.services.map((dyn: any) => {
+            const existing = SERVICES.find(s => s.id === dyn.serviceType);
+            if (existing) {
+              return existing;
+            }
+            return {
+              id: dyn.serviceType,
+              title: dyn.displayName || dyn.serviceType,
+              category: 'Government Public Scheme',
+              award: 'Direct Benefit Verification',
+              status: 'APPLICATIONS_OPEN',
+              description: `Automated multi-department eligibility verification across ${dyn.steps?.length || 0} federated data categories with zero physical paperwork.`,
+              departments: (dyn.steps || []).map((step: any) => ({
+                name: step.connectorSlug,
+                icon: <Shield size={12} />,
+                purpose: `Verifies ${step.category} data category`
+              })),
+              highlight: false,
+            };
+          });
+          setServicesList(merged);
+        }
+      })
+      .catch(() => {
+        // Fallback to default SERVICES list
+      });
+  }, []);
 
   const handleApply = async (serviceId: string) => {
     setLoadingService(serviceId);
@@ -182,7 +215,7 @@ export function ServicesPage() {
 
         {/* Services Grid */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {SERVICES.map((srv) => (
+          {servicesList.map((srv) => (
             <div
               key={srv.id}
               style={{

@@ -6,6 +6,7 @@ export interface CitizenAuthProfile {
   onegovId?: string;
   name: string;
   email?: string;
+  role?: string;
   state?: string;
   district?: string;
   pincode?: string;
@@ -19,6 +20,7 @@ interface AuthState {
   onegovId: string | null;
   name: string | null;
   email: string | null;
+  role: string | null;
   state: string | null;
   district: string | null;
   pincode: string | null;
@@ -36,6 +38,7 @@ export const useAuthStore = create<AuthState>()(
       onegovId: null,
       name: null,
       email: null,
+      role: null,
       state: null,
       district: null,
       pincode: null,
@@ -68,6 +71,7 @@ export const useAuthStore = create<AuthState>()(
           onegovId,
           name: profile.name || 'Citizen',
           email: profile.email || null,
+          role: profile.role || 'CITIZEN',
           state: profile.state || null,
           district: profile.district || null,
           pincode: profile.pincode || null,
@@ -83,6 +87,7 @@ export const useAuthStore = create<AuthState>()(
           onegovId: null,
           name: null,
           email: null,
+          role: null,
           state: null,
           district: null,
           pincode: null,

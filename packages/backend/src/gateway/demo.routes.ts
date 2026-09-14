@@ -25,7 +25,7 @@ export async function demoRoutes(app: FastifyInstance) {
     }
 
     const token = app.jwt.sign(
-      { citizenId: citizen.id, onegovId: citizen.onegovId, name: citizen.name },
+      { citizenId: citizen.id, onegovId: citizen.onegovId, name: citizen.name, role: citizen.role },
       { expiresIn: '24h' }
     );
 
@@ -42,6 +42,7 @@ export async function demoRoutes(app: FastifyInstance) {
       citizenId: citizen.id,
       onegovId: citizen.onegovId,
       name: citizen.name,
+      role: citizen.role,
       state: citizen.state,
       district: citizen.district,
       pincode: citizen.pincode,

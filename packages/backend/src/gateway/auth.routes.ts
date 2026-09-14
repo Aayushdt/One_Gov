@@ -16,8 +16,14 @@ export async function authRoutes(app: FastifyInstance) {
     const valid = await bcrypt.compare(password, citizen.passwordHash);
     if (!valid) return reply.status(401).send({ error: 'INVALID_CREDENTIALS' });
 
+    const guardianRelationships = await prisma.guardianRelationship.findMany({
+      where: { guardianId: citizen.id },
+      select: { dependentId: true },
+    });
+    const guardianFor = guardianRelationships.map((r) => r.dependentId);
+
     const token = app.jwt.sign(
-      { citizenId: citizen.id, onegovId: citizen.onegovId, name: citizen.name },
+      { citizenId: citizen.id, onegovId: citizen.onegovId, name: citizen.name, role: citizen.role, guardian_for: guardianFor },
       { expiresIn: '24h' }
     );
 
@@ -33,6 +39,7 @@ export async function authRoutes(app: FastifyInstance) {
       onegovId: citizen.onegovId,
       name: citizen.name,
       email: citizen.email,
+      role: citizen.role,
       state: citizen.state,
       district: citizen.district,
       pincode: citizen.pincode,
@@ -74,7 +81,7 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     const token = app.jwt.sign(
-      { citizenId: citizen.id, onegovId: citizen.onegovId, name: citizen.name },
+      { citizenId: citizen.id, onegovId: citizen.onegovId, name: citizen.name, role: citizen.role },
       { expiresIn: '24h' }
     );
 
@@ -90,6 +97,7 @@ export async function authRoutes(app: FastifyInstance) {
       onegovId: citizen.onegovId,
       name: citizen.name,
       email: citizen.email,
+      role: citizen.role,
       state: citizen.state,
       district: citizen.district,
       pincode: citizen.pincode,
@@ -113,6 +121,7 @@ export async function authRoutes(app: FastifyInstance) {
       onegovId: citizen.onegovId,
       name: citizen.name,
       email: citizen.email,
+      role: citizen.role,
       phone: citizen.phone,
       dateOfBirth: citizen.dateOfBirth,
       gender: citizen.gender,

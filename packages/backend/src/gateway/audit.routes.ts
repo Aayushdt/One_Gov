@@ -1,8 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { auditService } from '../audit/audit.service';
+import { toNarrative } from '../audit/audit.narrator';
 import { prisma } from '../config/db';
 
 export async function auditRoutes(app: FastifyInstance) {
+  // Plain language narrative audit trail (Item 4)
+  app.get<{ Params: { citizenId: string } }>('/:citizenId/narrative', async (req, reply) => {
+    try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
+    const me = req.user as any;
+    if (me.citizenId !== req.params.citizenId) return reply.status(403).send({ error: 'FORBIDDEN' });
+    const entries = await auditService.getTrail(req.params.citizenId);
+    return { narratives: entries.map(toNarrative), total: entries.length };
+  });
+
   // Get audit trail
   app.get<{ Params: { citizenId: string } }>('/:citizenId', async (req, reply) => {
     try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }

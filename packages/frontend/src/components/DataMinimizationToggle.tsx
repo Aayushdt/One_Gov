@@ -59,6 +59,14 @@ const WELFARE_RAW_FIELDS = [
   { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
 ];
 
+const MUNICIPAL_RAW_FIELDS = [
+  { key: 'propertyId', label: 'Property Registry ID', rawLabel: 'propertyId', inCDM: true },
+  { key: 'zone', label: 'Municipal Urban Zone', rawLabel: 'zone', inCDM: true },
+  { key: 'propertyTaxClearance', label: 'Property Tax Clearance', rawLabel: 'propertyTaxClearance', inCDM: true },
+  { key: 'verified', label: 'Municipal Registry Verified', rawLabel: 'verified', inCDM: true },
+  { key: 'source', label: 'Source System', rawLabel: 'source', inCDM: true },
+];
+
 interface Props {
   run: WorkflowRun;
 }
@@ -130,8 +138,9 @@ export function DataMinimizationToggle({ run }: Props) {
   const hasPolice = !!run.policeSnapshot;
   const hasBanking = !!run.bankingSnapshot;
   const hasWelfare = !!run.welfareSnapshot;
+  const hasMunicipal = !!run.municipalSnapshot;
 
-  if (!hasIdentity && !hasEducation && !hasIncome && !hasTransport && !hasPolice && !hasBanking && !hasWelfare) return null;
+  if (!hasIdentity && !hasEducation && !hasIncome && !hasTransport && !hasPolice && !hasBanking && !hasWelfare && !hasMunicipal) return null;
 
   return (
     <div
@@ -219,6 +228,7 @@ export function DataMinimizationToggle({ run }: Props) {
       {hasPolice && <DeptBlock title="Police CCTNS National Clearance Record" fields={POLICE_RAW_FIELDS} snapshot={run.policeSnapshot as any} rawView={rawView} />}
       {hasBanking && <DeptBlock title="Core Banking & NPCI Aadhaar-Seeded Record" fields={BANKING_RAW_FIELDS} snapshot={run.bankingSnapshot as any} rawView={rawView} />}
       {hasWelfare && <DeptBlock title="Public Distribution System (PDS) Welfare Record" fields={WELFARE_RAW_FIELDS} snapshot={run.welfareSnapshot as any} rawView={rawView} />}
+      {hasMunicipal && <DeptBlock title="Municipal Land Registry & Urban Property Record" fields={MUNICIPAL_RAW_FIELDS} snapshot={run.municipalSnapshot as any} rawView={rawView} />}
     </div>
   );
 }

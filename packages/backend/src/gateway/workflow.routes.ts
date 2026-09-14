@@ -21,6 +21,26 @@ export async function workflowRoutes(app: FastifyInstance) {
     return { runId: run.id, serviceType: run.serviceType };
   });
 
+  // Get all workflow runs for citizen (Item 4)
+  app.get('/citizen', async (req, reply) => {
+    try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
+    const { citizenId } = req.user as any;
+    const runs = await prisma.workflowRun.findMany({
+      where: { citizenId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        serviceType: true,
+        state: true,
+        eligibleResult: true,
+        failureReason: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return { runs };
+  });
+
   // Get workflow status
   app.get<{ Params: { runId: string } }>('/:runId', async (req, reply) => {
     try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }

@@ -10,7 +10,7 @@ async function main() {
   // Reset existing tables to ensure a clean 50-citizen deterministic dataset
   try {
     await prisma.$executeRawUnsafe(`
-      TRUNCATE TABLE "WorkflowStateHistory", "ConsentArtefact", "WorkflowRun", "AuditEntry", "IdentityMap", "Citizen" CASCADE;
+      TRUNCATE TABLE "Appeal", "GrievanceFlag", "EligibilityCertificate", "DataExportRequest", "Notification", "WorkflowStateHistory", "ConsentArtefact", "WorkflowRun", "AuditEntry", "IdentityMap", "Citizen" CASCADE;
     `);
     console.log('  ✓ Cleaned existing tables for fresh deterministic seed');
   } catch (err) {
@@ -19,8 +19,11 @@ async function main() {
 
   const citizens = generate50Citizens();
   const passwordHash = await bcrypt.hash('demo123', 10);
+  const adminEmail = (process.env.ADMIN_EMAIL || 'rahul@govlink.demo').toLowerCase();
 
   for (const c of citizens) {
+    const isAdmin = c.email.toLowerCase() === adminEmail;
+
     // 1. Create Citizen with Universal OneGov ID & Demographics
     const citizenRecord = await prisma.citizen.create({
       data: {
@@ -29,6 +32,7 @@ async function main() {
         email: c.email,
         name: c.name,
         passwordHash,
+        role: isAdmin ? 'ADMIN' : 'CITIZEN',
         phone: c.phone,
         dateOfBirth: c.dateOfBirth,
         gender: c.gender,
@@ -58,6 +62,10 @@ async function main() {
       console.log(`  ✓ [${c.onegovId}] ${c.name} (${c.email}) -> ${c.personaTag}`);
     }
   }
+
+  // 3. Seed Connector Registry & Service Definitions
+  const { seedRegistry } = await import('./registry.seed');
+  await seedRegistry(prisma);
 
   console.log(`\nSuccessfully seeded all 50 deterministic citizens with Universal IDs & 8-department federated maps!`);
 }

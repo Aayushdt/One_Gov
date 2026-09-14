@@ -6,21 +6,42 @@ import { workflowEngine } from '../workflow/engine';
 
 export async function consentRoutes(app: FastifyInstance) {
   // Grant consent for a run
-  app.post<{ Body: { runId: string; categories: DataCategory[]; purpose?: string; requestedBy?: string; durationHours?: number } }>('/grant', async (req, reply) => {
+  app.post<{
+    Body: {
+      runId: string;
+      categories: DataCategory[];
+      purpose?: string;
+      requestedBy?: string;
+      durationHours?: number;
+      maxUses?: number;
+      guardianId?: string;
+    };
+  }>('/grant', async (req, reply) => {
     try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
-    const { citizenId } = req.user as any;
-    const { runId, categories, durationHours = 24 } = req.body;
+    const user = req.user as any;
+    let citizenId = user.citizenId;
+    const { runId, categories, durationHours = 24, maxUses, guardianId } = req.body;
+
+    // Guardian Consent check (Item 2)
+    if (guardianId) {
+      if (user.citizenId !== guardianId && !user.guardian_for?.includes(citizenId)) {
+        return reply.status(403).send({ error: 'UNAUTHORIZED_GUARDIAN', message: 'You do not have guardian permission for this citizen' });
+      }
+    }
 
     // Resolve serviceType from the workflow run for accurate purpose labelling
     const workflowRun = await import('../config/db').then(({ prisma }) =>
-      prisma.workflowRun.findUnique({ where: { id: runId }, select: { serviceType: true } })
+      prisma.workflowRun.findUnique({ where: { id: runId }, select: { serviceType: true, citizenId: true } })
     );
     const serviceType = workflowRun?.serviceType ?? 'SCHOLARSHIP';
+    if (workflowRun?.citizenId) {
+      citizenId = workflowRun.citizenId;
+    }
 
     const PURPOSE_MAP: Record<string, string> = {
-      SCHOLARSHIP: 'National Merit STEM Fellowship Application 2025',
-      TRANSPORT: 'Commercial Transport Fast-Pass Authorization',
-      WELFARE: 'Social Security & Direct Benefit Transfer Registration',
+      SCHOLARSHIP: 'Scholarship: National Merit STEM Fellowship Application 2025',
+      TRANSPORT: 'Transport: Commercial Transport Fast-Pass Authorization',
+      WELFARE: 'Welfare: Social Security & Direct Benefit Transfer Registration',
     };
     const REQUESTER_MAP: Record<string, string> = {
       SCHOLARSHIP: 'scholarship-service',
@@ -31,13 +52,62 @@ export async function consentRoutes(app: FastifyInstance) {
     const purpose = req.body.purpose ?? PURPOSE_MAP[serviceType] ?? PURPOSE_MAP.SCHOLARSHIP;
     const requestedBy = req.body.requestedBy ?? REQUESTER_MAP[serviceType] ?? REQUESTER_MAP.SCHOLARSHIP;
 
-    const artefacts = await consentService.grantConsent({ runId, citizenId, purpose, categories, requestedBy, durationHours });
-    await auditService.log({ citizenId, eventType: 'CONSENT_GRANTED', actor: citizenId, payload: { runId, categories, purpose, serviceType, expiresAt: artefacts[0]?.expiresAt } });
+    const artefacts = await consentService.grantConsent({
+      runId,
+      citizenId,
+      purpose,
+      categories,
+      requestedBy,
+      durationHours,
+      maxUses: typeof maxUses === 'number' ? maxUses : null,
+      guardianId: guardianId ?? null,
+    });
+
+    await auditService.log({
+      citizenId,
+      eventType: 'CONSENT_GRANTED',
+      actor: user.citizenId,
+      payload: {
+        runId,
+        categories,
+        purpose,
+        serviceType,
+        maxUses: maxUses ?? null,
+        guardianId: guardianId ?? null,
+        expiresAt: artefacts[0]?.expiresAt,
+      },
+    });
 
     // Advance workflow now that consent is granted
     workflowEngine.advance(runId).catch(console.error);
 
     return { artefacts };
+  });
+
+  // Renew consent endpoint (Item 2 Step 4)
+  app.post<{ Params: { runId: string }; Body: { extensionHours?: number } }>('/run/:runId/renew', async (req, reply) => {
+    try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
+    const { citizenId } = req.user as any;
+    const { runId } = req.params;
+    const { extensionHours = 24 } = req.body ?? {};
+
+    const result = await consentService.renewConsent(runId, citizenId, extensionHours);
+    await auditService.log({
+      citizenId,
+      eventType: 'CONSENT_GRANTED',
+      actor: citizenId,
+      payload: { runId, action: 'RENEW', extensionHours, expiresAt: result.expiresAt.toISOString() },
+    });
+
+    return reply.send({ success: true, ...result });
+  });
+
+  // Get all consent artefacts for citizen (Item 3)
+  app.get('/citizen', async (req, reply) => {
+    try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
+    const { citizenId } = req.user as any;
+    const artefacts = await consentService.getAllCitizenConsents(citizenId);
+    return reply.send({ artefacts });
   });
 
   // Get consent status for a run
@@ -60,3 +130,4 @@ export async function consentRoutes(app: FastifyInstance) {
     return { message: 'consent_revoked', category: category ?? 'ALL' };
   });
 }
+

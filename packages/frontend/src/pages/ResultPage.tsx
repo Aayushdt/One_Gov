@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { api } from '../hooks/useApi';
 import { WorkflowRun } from '../types';
 import { useAuthStore } from '../store/authStore';
-import { ClipboardList, RotateCcw, CheckCircle2, XCircle, Printer, ShieldCheck, QrCode } from 'lucide-react';
+import { ClipboardList, RotateCcw, CheckCircle2, XCircle, Printer, ShieldCheck, QrCode, Scale } from 'lucide-react';
 
 export function ResultPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -105,9 +105,21 @@ export function ResultPage() {
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {isEligible ? (
+                <Button onClick={() => navigate(`/certificate/${runId}`)}>
+                  <ShieldCheck size={16} /> Digital QR Certificate
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => navigate(`/appeal/${runId}`)}
+                  style={{ background: 'var(--color-error)', borderColor: 'var(--color-error)' }}
+                >
+                  <Scale size={16} /> Dispute Record &amp; File Appeal
+                </Button>
+              )}
               <Button variant="secondary" onClick={handlePrint}>
-                <Printer size={16} /> Print Official Certificate
+                <Printer size={16} /> Print Document
               </Button>
             </div>
           </div>

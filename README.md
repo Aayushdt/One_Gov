@@ -163,18 +163,32 @@ bash scripts/demo.sh wow3
 ## 8. Architecture
 
 ```
-Citizen → Frontend (React + Vite, port 5173)
+Citizen → Frontend (React + Vite + Tailwind + Lucide, port 5173)
+           ├── Unified Dashboard (`/dashboard`)
+           ├── Consent Management & Revocation (`/consents`)
+           ├── Verifiable Credentials (`/certificate/:runId`)
+           ├── Data Portability Export (`/export`)
+           ├── Appeals Flow (`/appeal/:runId`)
+           ├── Admin Connector Onboarding (`/admin/onboarding`)
+           ├── Operations & Circuit Breaker Dashboard (`/ops`)
+           ├── Plain-Language Audit Narrative (`/audit/narrative`)
+           └── Multilingual Support (English & Hindi)
         → Backend (Fastify + Prisma + BullMQ, port 3000)
-           ├── ConsentService    — one row per DataCategory per WorkflowRun
-           ├── WorkflowEngine    — 12-state machine (AWAITING_CONSENT → SUBMITTED)
-           │    ├── SCHOLARSHIP  : Identity → Education → Income → Banking → Eligibility
-           │    ├── TRANSPORT    : Identity → Transport → Police → Banking → Municipal → Eligibility
-           │    └── WELFARE      : Identity → Income → Welfare → Banking → Eligibility
-           ├── Connectors        — 8 typed connectors (identity, education, revenue,
-           │                       transport, police, banking, welfare, municipal)
-           └── AuditService      — SHA-256 hash chain, FOR UPDATE locking
-        → PostgreSQL (Prisma, port 5432)
-        → Redis (BullMQ retry queue, port 6379)
+           ├── ConnectorRegistry & Runner  — data-driven dynamic manifests
+           ├── WorkflowEngine & Worker     — separated execution process with circuit breakers
+           ├── ConsentService              — purpose-bound, expiring, guardian/delegate consent
+           ├── CertificateService          — Ed25519 signed verifiable credentials with QR codes
+           ├── NotificationService         — real-time in-app alerts (submissions, approvals, expiries)
+           ├── AppealService               — eligibility dispute filing and rerun management
+           ├── RetentionService            — automated DPDP data minimization & snapshot purging
+           ├── GrievanceService            — citizen discrepancy flagging on audit trail
+           └── AuditService                — tamper-evident SHA-256 hash-chained log
+        → Worker Process (BullMQ background processor)
+           ├── Workflow execution queue
+           ├── Daily consent expiry monitor
+           └── Daily data retention & snapshot purge job
+        → PostgreSQL (Prisma, port 5432/5433)
+        → Redis (BullMQ queues, port 6379)
         → mock-identity:4001   (Identity/UIDAI + Police/CCTNS + Municipal)
         → mock-education:4002  (Education/NAD + Welfare/PDS)
         → mock-revenue:4003    (Income Tax/CBDT + Transport/Parivahan + Banking/KYC)
@@ -320,7 +334,25 @@ replays the whole chain and confirms every hash and `prevHash` link still matche
 
 ---
 
-## 10. Architecture Decision: Mock Services vs. Full Relational Database
+## 10. Administrator Access & Bootstrapping
+
+GovLink includes role-based access control (`CITIZEN` vs. `ADMIN`) protecting department onboarding, circuit breaker administration, and appeal status resolution.
+
+- **Default Admin Account:** Seeded automatically from `ADMIN_EMAIL` in `.env` (`rahul@govlink.demo`).
+- **Promoting Accounts to Admin (CLI):**
+  ```bash
+  node scripts/make-admin.js --email rahul@govlink.demo
+  # or by OneGov ID:
+  node scripts/make-admin.js --onegov-id OG-2026-00000001
+  ```
+- **Admin Pages in Web UI:**
+  - Department Onboarding: `http://localhost:5173/admin/onboarding`
+  - System Operations & Telemetry: `http://localhost:5173/ops`
+  - Appeals & Grievance Moderation: `http://localhost:5173/admin/appeals`
+
+---
+
+## 11. Architecture Decision: Mock Services vs. Full Relational Database
 
 ### What lives in PostgreSQL (Prisma)
 

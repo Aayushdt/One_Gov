@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "services": "सेवाएं",
+    "myConsents": "मेरी सहमतियां",
+    "auditTrail": "ऑडिट ट्रेल",
+    "myHistory": "सरल इतिहास",
+    "ops": "संचालन",
+    "signOut": "लॉग आउट"
+  },
+  "audit": {
+    "citizenLogin": "नागरिक ने सत्यापित क्रेडेंशियल्स का उपयोग करके सुरक्षित रूप से लॉगिन किया।",
+    "consentGranted": "आवेदन संख्या {{runId}} के लिए {{category}} डेटा साझा करने की सहमति प्रदान की गई।",
+    "consentRevoked": "आवेदन संख्या {{runId}} के लिए {{category}} की सहमति वापस ले ली गई।",
+    "connectorCalled": "गेटवे ने {{department}} विभाग के डेटाबेस से रिकॉर्ड का अनुरोध किया (प्रयास {{attempt}})।",
+    "connectorSuccess": "{{department}} विभाग से रिकॉर्ड सफलतापूर्वक प्राप्त और सत्यापित किया गया।",
+    "connectorFailed": "{{department}} विभाग से संपर्क करने में समस्या आई: {{error}}।",
+    "workflowStateChange": "आवेदन की स्थिति {{fromState}} से बदलकर {{toState}} हो गई।",
+    "eligibilityResult": "पात्रता मूल्यांकन पूर्ण हुआ: {{reason}} (पात्र: {{eligible}})।",
+    "dataAccessed": "डेटा न्यूनतमकरण नियमों के अनुसार {{category}} संसाधित किया गया।",
+    "genericEvent": "सिस्टम सुरक्षा घटना दर्ज की गई: {{eventType}}।"
+  },
+  "dashboard": {
+    "title": "एकीकृत सेवा डैशबोर्ड",
+    "subtitle": "अपने सभी सरकारी कल्याण, लाइसेंस और छात्रवृत्ति आवेदनों को एक ही स्थान पर ट्रैक करें",
+    "newApp": "नया आवेदन",
+    "total": "कुल आवेदन",
+    "eligible": "पात्र पाए गए",
+    "completed": "जमा / पूर्ण",
+    "inProgress": "प्रक्रियाधीन",
+    "search": "योजना या रन आईडी द्वारा खोजें...",
+    "filterAll": "सभी",
+    "filterSubmitted": "जमा",
+    "filterActive": "सक्रिय",
+    "filterFailed": "विफल"
+  },
+  "offline": {
+    "banner": "आप वर्तमान में ऑफ़लाइन हैं। सहेजी गई जानकारी दिखाई जा रही है। इंटरनेट जुड़ने पर नेटवर्क अनुरोध फिर से शुरू होंगे।"
+  }
+}

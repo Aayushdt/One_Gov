@@ -77,11 +77,20 @@ export const api = {
   getWorkflow: (runId: string) =>
     req<any>(`/api/workflow/${runId}`),
 
-  grantConsent: (runId: string, categories: string[], purpose?: string, requestedBy?: string) =>
+  grantConsent: (runId: string, categories: string[], purpose?: string, requestedBy?: string, maxUses?: number, guardianId?: string) =>
     req<any>('/api/consent/grant', {
       method: 'POST',
-      body: JSON.stringify({ runId, categories, purpose, requestedBy }),
+      body: JSON.stringify({ runId, categories, purpose, requestedBy, maxUses, guardianId }),
     }),
+
+  renewConsent: (runId: string, extensionHours = 24) =>
+    req<{ success: boolean; count: number; expiresAt: string }>(`/api/consent/run/${runId}/renew`, {
+      method: 'POST',
+      body: JSON.stringify({ extensionHours }),
+    }),
+
+  getAllConsents: () =>
+    req<{ artefacts: any[] }>('/api/consent/citizen'),
 
   getConsent: (runId: string) =>
     req<{ artefacts: any[] }>(`/api/consent/run/${runId}`),
@@ -100,4 +109,96 @@ export const api = {
 
   restoreAuditChain: (citizenId: string) =>
     req<{ restored: boolean }>(`/api/audit/${citizenId}/restore`, { method: 'POST' }),
+
+  getNotifications: (unreadOnly?: boolean) =>
+    req<{ notifications: any[]; unreadCount: number }>(`/api/notifications${unreadOnly ? '?unreadOnly=true' : ''}`),
+
+  markNotificationRead: (id: string) =>
+    req<{ success: boolean }>(`/api/notifications/${id}/read`, { method: 'PATCH' }),
+
+  markAllNotificationsRead: () =>
+    req<{ success: boolean }>('/api/notifications/read-all', { method: 'PATCH' }),
+
+  getMyWorkflows: () =>
+    req<{ runs: any[] }>('/api/workflow/citizen'),
+
+  getAuditNarrative: (citizenId: string) =>
+    req<{ narratives: any[]; total: number }>(`/api/audit/${citizenId}/narrative`),
+
+  getCertificate: (runId: string) =>
+    req<{ certificate: any; token: string }>(`/api/certificate/${runId}`),
+
+  verifyCertificateToken: (token: string) =>
+    req<{ valid: boolean; reason?: string; payload?: any; algorithm?: string }>(
+      `/api/verify/certificate?token=${encodeURIComponent(token)}`
+    ),
+
+  requestDataExport: () =>
+    req<any>('/api/export/request', { method: 'POST' }),
+
+  getMyDataExports: () =>
+    req<{ exports: any[] }>('/api/export/my'),
+
+  submitAppeal: (data: { runId: string; disputedCategory: string; reason: string; evidenceUrl?: string }) =>
+    req<any>('/api/appeals', { method: 'POST', body: JSON.stringify(data) }),
+
+  getAppeal: (id: string) =>
+    req<any>(`/api/appeals/${id}`),
+
+  getAppeals: (status?: string) =>
+    req<{ appeals: any[] }>(`/api/appeals${status ? `?status=${status}` : ''}`),
+
+  updateAppealStatus: (id: string, status: string, adminNote?: string) =>
+    req<any>(`/api/appeals/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, adminNote }) }),
+
+  rerunAppeal: (id: string) =>
+    req<any>(`/api/appeals/${id}/rerun`, { method: 'POST' }),
+
+  getRegisteredConnectors: () =>
+    req<{ count: number; connectors: any[] }>('/api/registry/connectors'),
+
+  registerConnector: (data: any) =>
+    req<any>('/api/registry/connectors', { method: 'POST', body: JSON.stringify(data) }),
+
+  flagAuditEntry: (auditEntryId: string, reason: string) =>
+    req<any>('/api/grievances', { method: 'POST', body: JSON.stringify({ auditEntryId, reason }) }),
+
+  getGrievances: (status?: string) =>
+    req<{ grievances: any[] }>(`/api/grievances${status ? `?status=${status}` : ''}`),
+
+  resolveGrievance: (id: string, status: string, adminNote?: string) =>
+    req<any>(`/api/grievances/${id}`, { method: 'PATCH', body: JSON.stringify({ status, adminNote }) }),
+
+  runRetention: (retentionGraceDays = 0) =>
+    req<any>('/api/ops/retention/run', { method: 'POST', body: JSON.stringify({ retentionGraceDays }) }),
+
+  getOpsMetrics: () =>
+    req<{ ok: boolean; connectors: any[] }>('/api/ops/metrics', {
+      headers: { 'x-admin-role': 'ADMIN' },
+    }),
+
+  resetCircuitBreaker: (connectorSlug: string) =>
+    req<{ ok: boolean; message: string }>(`/api/ops/circuits/${connectorSlug}/reset`, {
+      method: 'POST',
+      headers: { 'x-admin-role': 'ADMIN' },
+    }),
+
+  downloadExport: async (exportId: string): Promise<Blob> => {
+    const token = getToken();
+    const res = await fetch(`${BASE}/api/export/${exportId}/download`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`Download failed with status ${res.status}`);
+    }
+    return res.blob();
+  },
+
+  verifyPublicCertificate: (token: string) =>
+    req<any>(`/api/certificate/public/verify?token=${encodeURIComponent(token)}`),
+
+  getServices: () =>
+    req<{ count: number; services: any[] }>('/api/registry/services'),
 };

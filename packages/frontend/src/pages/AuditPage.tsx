@@ -1,10 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { Button } from '../components/ui/Button';
 import { api } from '../hooks/useApi';
 import { AuditEntry } from '../types';
 import { useAuthStore } from '../store/authStore';
-import { ChevronDown, ChevronUp, Copy, CheckCircle, XCircle, ShieldCheck, Zap, RotateCcw, Link2, Filter, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, CheckCircle, XCircle, ShieldCheck, Zap, RotateCcw, Link2, Filter, AlertTriangle, BookOpen } from 'lucide-react';
+import { GrievanceFlagButton } from '../components/GrievanceFlagButton';
 
 const EVENT_COLORS: Record<string, string> = {
   CONSENT_GRANTED: 'var(--color-success)',
@@ -166,6 +168,26 @@ export function AuditPage() {
                 <ShieldCheck size={16} />
                 {verifying ? 'Verifying Hash Chain…' : 'Verify Chain Integrity'}
               </Button>
+
+              <Link
+                to="/my-history"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 14px',
+                  background: 'var(--color-bg-surface)',
+                  color: 'var(--color-accent-primary)',
+                  border: '1px solid var(--color-border-default)',
+                  borderRadius: 'var(--radius-md, 6px)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <BookOpen size={15} /> Plain-Language View
+              </Link>
 
               <Button variant="secondary" onClick={handleTamper} disabled={tampering || entries.length === 0} size="md" title="Simulate a database attack">
                 <Zap size={15} color="var(--color-accent-amber)" />
@@ -384,8 +406,13 @@ export function AuditPage() {
                           {(entry.payload as any).fromState && `${(entry.payload as any).fromState} ➔ ${(entry.payload as any).toState}`}
                           {(entry.payload as any)._unauthorizedMutation && <span style={{ color: 'var(--color-error)', fontWeight: 700 }}> Direct DB Edit: {(entry.payload as any)._unauthorizedMutation}</span>}
                         </td>
-                        <td style={{ padding: '12px 14px', color: 'var(--color-text-tertiary)' }}>
-                          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        <td style={{ padding: '12px 14px', color: 'var(--color-text-tertiary)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                            <GrievanceFlagButton auditEntryId={entry.id} seq={entry.seq} eventType={entry.eventType} />
+                            <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }} onClick={() => toggleRow(entry.id)}>
+                              {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                       {isOpen && (

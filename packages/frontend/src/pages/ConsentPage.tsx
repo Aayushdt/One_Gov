@@ -77,6 +77,12 @@ export function ConsentPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
 
+  // Guardian consent state (Item 2)
+  const [isMinor, setIsMinor] = React.useState(false);
+  const [guardianOneGovId, setGuardianOneGovId] = React.useState('');
+  const [guardianRelationship, setGuardianRelationship] = React.useState('PARENT');
+  const [guardianAgreed, setGuardianAgreed] = React.useState(false);
+
   React.useEffect(() => {
     if (runId) {
       api.getWorkflow(runId).then((run) => {
@@ -97,13 +103,21 @@ export function ConsentPage() {
   }, [runId]);
 
   const allEnabled = categories.every((cat) => enabled[cat]);
+  const canSubmit = allEnabled && (!isMinor || (guardianOneGovId.trim().length > 0 && guardianAgreed));
 
   const handleSubmit = async () => {
-    if (!allEnabled || !runId) return;
+    if (!canSubmit || !runId) return;
     setLoading(true);
     setError('');
     try {
-      await api.grantConsent(runId, categories);
+      await api.grantConsent(
+        runId,
+        categories,
+        undefined,
+        undefined,
+        undefined,
+        isMinor ? guardianOneGovId.trim() : undefined
+      );
       navigate(`/status/${runId}`);
     } catch (e: any) {
       setError(e.message ?? 'Failed to grant consent. Please try again.');
@@ -246,6 +260,124 @@ export function ConsentPage() {
           );
         })}
 
+        {/* Minor / Guardian Consent Declaration (Item 2) */}
+        <div
+          style={{
+            marginTop: 24,
+            padding: 16,
+            background: isMinor ? 'var(--color-bg-surface)' : 'var(--color-bg-base)',
+            border: `1px solid ${isMinor ? 'var(--color-accent-primary)' : 'var(--color-border-default)'}`,
+            borderRadius: 'var(--radius-md, 8px)',
+            transition: 'all var(--duration-base)',
+          }}
+        >
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              color: 'var(--color-text-primary)',
+              fontFamily: '"Inter", sans-serif',
+            }}
+          >
+            <input
+              type="checkbox"
+              id="is-minor-toggle"
+              checked={isMinor}
+              onChange={(e) => setIsMinor(e.target.checked)}
+              style={{ accentColor: 'var(--color-accent-primary)', width: 16, height: 16 }}
+            />
+            <span>Applicant is a Minor (&lt; 18 years of age) — Requires Guardian Consent</span>
+          </label>
+
+          {isMinor && (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--color-border-subtle)' }}>
+              <p style={{ margin: '0 0 12px', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontFamily: '"Inter", sans-serif' }}>
+                Pursuant to statutory child privacy protections, parental or legal guardian consent is mandatory to process identity snapshots and data pipelines for minors.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <label htmlFor="guardian-id" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-text-secondary)', marginBottom: 4 }}>
+                    Guardian OneGov ID
+                  </label>
+                  <input
+                    id="guardian-id"
+                    type="text"
+                    placeholder="e.g. 1GOV-GDN-998811"
+                    value={guardianOneGovId}
+                    onChange={(e) => setGuardianOneGovId(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: 'var(--color-bg-base)',
+                      border: '1px solid var(--color-border-default)',
+                      borderRadius: 4,
+                      color: 'var(--color-text-primary)',
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="guardian-rel" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-text-secondary)', marginBottom: 4 }}>
+                    Relationship
+                  </label>
+                  <select
+                    id="guardian-rel"
+                    value={guardianRelationship}
+                    onChange={(e) => setGuardianRelationship(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: 'var(--color-bg-base)',
+                      border: '1px solid var(--color-border-default)',
+                      borderRadius: 4,
+                      color: 'var(--color-text-primary)',
+                      fontFamily: '"Inter", sans-serif',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="PARENT">Parent / Biological Guardian</option>
+                    <option value="LEGAL_GUARDIAN">Court-Appointed Legal Guardian</option>
+                    <option value="INSTITUTIONAL_SPONSOR">Institutional Caretaker / Sponsor</option>
+                  </select>
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  cursor: 'pointer',
+                  fontSize: '0.8125rem',
+                  color: 'var(--color-text-secondary)',
+                  fontFamily: '"Inter", sans-serif',
+                  marginTop: 8,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  id="guardian-agree"
+                  checked={guardianAgreed}
+                  onChange={(e) => setGuardianAgreed(e.target.checked)}
+                  style={{ accentColor: 'var(--color-accent-primary)', marginTop: 2 }}
+                />
+                <span>
+                  I declare under penalty of law that I am the authorized legal guardian for this applicant, and I authorize the issuance of requested data categories.
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+
         <p style={{ margin: '16px 0 0', fontSize: '0.75rem', color: 'var(--color-text-tertiary)', fontFamily: '"Inter", sans-serif' }}>
           Consent valid for 24 hours · Cryptographic event logged to immutable per-citizen audit chain
         </p>
@@ -258,11 +390,19 @@ export function ConsentPage() {
           </div>
         )}
 
+        {isMinor && (!guardianOneGovId.trim() || !guardianAgreed) && (
+          <div style={{ margin: '12px 0 0', padding: '10px 14px', background: 'var(--color-warning-bg)', borderLeft: '3px solid var(--color-accent-amber)', borderRadius: '0 4px 4px 0' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#7a5800', fontFamily: '"Inter", sans-serif' }}>
+              Guardian OneGov ID and legal attestation are required for minor applicants before consent can be granted.
+            </p>
+          </div>
+        )}
+
         {error && <p style={{ margin: '12px 0 0', fontSize: '0.875rem', color: 'var(--color-error)', fontFamily: '"Inter", sans-serif' }}>{error}</p>}
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 32, flexWrap: 'wrap' }}>
           <Button variant="ghost" onClick={() => navigate('/services')}>Cancel</Button>
-          <Button disabled={!allEnabled || loading} onClick={handleSubmit}>
+          <Button disabled={!canSubmit || loading} onClick={handleSubmit}>
             {loading ? 'Authorizing Consent…' : 'Grant Consent & Initiate Pipeline'}
             <ChevronRight size={16} />
           </Button>
