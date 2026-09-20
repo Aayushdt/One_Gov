@@ -54,7 +54,7 @@ export function CertificatePage() {
         const qr = await QRCode.toDataURL(verifyUrl, {
           margin: 1,
           width: 200,
-          color: { dark: '#1A1311', light: '#FCFAF6' },
+          color: { dark: '#261F1D', light: '#FDFBF6' },
         });
         setQrUrl(qr);
       })

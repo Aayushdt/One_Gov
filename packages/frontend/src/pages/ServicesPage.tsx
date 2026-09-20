@@ -7,14 +7,14 @@ import { useAuthStore } from '../store/authStore';
 import { ArrowRight, Shield, GraduationCap, Banknote, Sparkles, Car, ShieldAlert, Landmark, Building, HeartHandshake } from 'lucide-react';
 
 const CONNECTED_SILOS = [
-  { name: 'UIDAI Identity', code: 'AADHAAR', icon: <Shield size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Income Tax CBDT', code: 'PAN', icon: <Banknote size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Higher Education NAD', code: 'EDU', icon: <GraduationCap size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Parivahan RTO', code: 'DL', icon: <Car size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Police CCTNS', code: 'POLICE', icon: <ShieldAlert size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Core Banking NPCI', code: 'DBT', icon: <Landmark size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Public Welfare PDS', code: 'RATION', icon: <HeartHandshake size={13} />, status: 'ONLINE', color: '#10b981' },
-  { name: 'Municipal Land Records', code: 'PROP', icon: <Building size={13} />, status: 'ONLINE', color: '#10b981' },
+  { name: 'UIDAI Identity', code: 'AADHAAR', icon: <Shield size={13} />, status: 'ONLINE', color: 'var(--dept-1)' },
+  { name: 'Income Tax CBDT', code: 'PAN', icon: <Banknote size={13} />, status: 'ONLINE', color: 'var(--dept-2)' },
+  { name: 'Higher Education NAD', code: 'EDU', icon: <GraduationCap size={13} />, status: 'ONLINE', color: 'var(--dept-3)' },
+  { name: 'Parivahan RTO', code: 'DL', icon: <Car size={13} />, status: 'ONLINE', color: 'var(--dept-4)' },
+  { name: 'Police CCTNS', code: 'POLICE', icon: <ShieldAlert size={13} />, status: 'ONLINE', color: 'var(--dept-5)' },
+  { name: 'Core Banking NPCI', code: 'DBT', icon: <Landmark size={13} />, status: 'ONLINE', color: 'var(--dept-6)' },
+  { name: 'Public Welfare PDS', code: 'RATION', icon: <HeartHandshake size={13} />, status: 'ONLINE', color: 'var(--dept-7)' },
+  { name: 'Municipal Land Records', code: 'PROP', icon: <Building size={13} />, status: 'ONLINE', color: 'var(--dept-8)' },
 ];
 
 const SERVICES = [
@@ -156,14 +156,14 @@ export function ServicesPage() {
           <div style={{
             marginBottom: 24,
             padding: '14px 18px',
-            background: 'rgba(234, 179, 8, 0.08)',
-            border: '1px solid rgba(234, 179, 8, 0.3)',
+            background: 'var(--warning-tint)',
+            border: '1px solid var(--warning)',
             borderRadius: 8,
             display: 'flex',
             alignItems: 'center',
             gap: 12,
           }}>
-            <ShieldAlert size={20} color="#ca8a04" style={{ flexShrink: 0 }} />
+            <ShieldAlert size={20} color="var(--warning)" style={{ flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <p style={{ margin: '0 0 2px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                 Self-Registered Account · Department Records Unlinked
@@ -233,8 +233,8 @@ export function ServicesPage() {
                     position: 'absolute',
                     top: -12,
                     right: 24,
-                    background: 'var(--color-accent-primary)',
-                    color: 'white',
+                    background: 'var(--primary)',
+                    color: 'var(--on-primary)',
                     padding: '3px 12px',
                     borderRadius: 12,
                     fontSize: '0.7rem',

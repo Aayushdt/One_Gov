@@ -9,14 +9,14 @@ import { ChevronDown, ChevronUp, Copy, CheckCircle, XCircle, ShieldCheck, Zap, R
 import { GrievanceFlagButton } from '../components/GrievanceFlagButton';
 
 const EVENT_COLORS: Record<string, string> = {
-  CONSENT_GRANTED: 'var(--color-success)',
-  CONSENT_REVOKED: 'var(--color-error)',
-  CONNECTOR_CALLED: '#3b82f6',
-  CONNECTOR_SUCCESS: 'var(--color-success)',
-  CONNECTOR_FAILED: 'var(--color-accent-amber)',
-  ELIGIBILITY_RESULT: 'var(--color-success)',
-  WORKFLOW_STATE_CHANGE: '#8b5cf6',
-  CITIZEN_LOGIN: '#64748b',
+  CONSENT_GRANTED: 'var(--success)',
+  CONSENT_REVOKED: 'var(--danger)',
+  CONNECTOR_CALLED: 'var(--info)',
+  CONNECTOR_SUCCESS: 'var(--success)',
+  CONNECTOR_FAILED: 'var(--warning)',
+  ELIGIBILITY_RESULT: 'var(--success)',
+  WORKFLOW_STATE_CHANGE: 'var(--accent)',
+  CITIZEN_LOGIN: 'var(--text-muted)',
 };
 
 function CopyButton({ text }: { text: string }) {

@@ -116,6 +116,14 @@ export async function authRoutes(app: FastifyInstance) {
       include: { identityMap: true },
     });
     if (!citizen) return reply.status(404).send({ error: 'NOT_FOUND' });
+    // Mask federated registry references dynamically so raw IDs never traverse the network
+    const maskedIdentityMap = citizen.identityMap ? {
+      identityDeptId: citizen.identityMap.identityDeptId ? `SIM-AADHAAR-XXXX-${citizen.identityMap.identityDeptId.slice(-4)}` : null,
+      revenueDeptId: citizen.identityMap.revenueDeptId ? `SIM-PAN-XXXX-${citizen.identityMap.revenueDeptId.slice(-4)}` : null,
+      educationDeptId: citizen.identityMap.educationDeptId ? `SIM-EDU-XXXX-${citizen.identityMap.educationDeptId.slice(-4)}` : null,
+      transportDeptId: citizen.identityMap.transportDeptId ? `SIM-DL-XXXX-${citizen.identityMap.transportDeptId.slice(-4)}` : null,
+    } : null;
+
     return {
       id: citizen.id,
       onegovId: citizen.onegovId,
@@ -129,7 +137,7 @@ export async function authRoutes(app: FastifyInstance) {
       district: citizen.district,
       pincode: citizen.pincode,
       primaryAddress: citizen.primaryAddress,
-      identityMap: citizen.identityMap,
+      identityMap: maskedIdentityMap,
     };
   });
 

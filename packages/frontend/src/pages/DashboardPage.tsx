@@ -13,6 +13,7 @@ import {
   Search,
   Filter,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface WorkflowRunSummary {
   id: string;
@@ -32,11 +33,29 @@ const SERVICE_NAMES: Record<string, string> = {
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [runs, setRuns] = useState<WorkflowRunSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const formatState = (state: string) => {
+    const norm = state.toUpperCase();
+    if (norm === 'SUBMITTED') return t('dashboard.statusSubmitted');
+    if (norm === 'ACTIVE' || norm === 'IN_PROGRESS') return t('dashboard.statusActive');
+    if (norm === 'FAILED') return t('dashboard.statusFailed');
+    if (norm === 'APPROVED') return t('dashboard.statusApproved');
+    return state;
+  };
+
+  const getFilterLabel = (st: string) => {
+    if (st === 'ALL') return t('dashboard.filterAll');
+    if (st === 'SUBMITTED') return t('dashboard.filterSubmitted');
+    if (st === 'ACTIVE') return t('dashboard.filterActive');
+    if (st === 'FAILED') return t('dashboard.filterFailed');
+    return st;
+  };
 
   const fetchWorkflows = async () => {
     setLoading(true);
@@ -111,10 +130,10 @@ export function DashboardPage() {
                 lineHeight: 1.2,
               }}
             >
-              My Service Applications
+              {t('dashboard.title')}
             </h1>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: 0 }}>
-              Track all your citizen welfare, license, and fellowship applications in one place.
+              {t('dashboard.subtitle')}
             </p>
           </div>
           <button
@@ -137,7 +156,7 @@ export function DashboardPage() {
             onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
           >
-            <PlusCircle size={16} /> New Application
+            <PlusCircle size={16} /> {t('dashboard.newApp')}
           </button>
         </div>
 
@@ -168,7 +187,7 @@ export function DashboardPage() {
                 fontWeight: 600,
               }}
             >
-              Total Applications
+              {t('dashboard.total')}
             </span>
             <div
               style={{
@@ -200,7 +219,7 @@ export function DashboardPage() {
                 fontWeight: 600,
               }}
             >
-              Deemed Eligible
+              {t('dashboard.eligible')}
             </span>
             <div
               style={{
@@ -232,7 +251,7 @@ export function DashboardPage() {
                 fontWeight: 600,
               }}
             >
-              Submitted / Complete
+              {t('dashboard.completed')}
             </span>
             <div
               style={{
@@ -264,7 +283,7 @@ export function DashboardPage() {
                 fontWeight: 600,
               }}
             >
-              In Progress
+              {t('dashboard.inProgress')}
             </span>
             <div
               style={{
@@ -306,7 +325,7 @@ export function DashboardPage() {
             <Search size={16} color="var(--color-text-tertiary)" style={{ marginRight: '8px' }} />
             <input
               type="text"
-              placeholder="Search by scheme or run ID..."
+              placeholder={t('dashboard.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -343,7 +362,7 @@ export function DashboardPage() {
                     transition: 'all var(--duration-fast)',
                   }}
                 >
-                  {st}
+                  {getFilterLabel(st)}
                 </button>
               );
             })}
@@ -467,7 +486,7 @@ export function DashboardPage() {
                         ) : (
                           <Clock size={13} />
                         )}
-                        {run.state}
+                        {formatState(run.state)}
                       </span>
 
                       {/* Eligibility Pill if completed */}

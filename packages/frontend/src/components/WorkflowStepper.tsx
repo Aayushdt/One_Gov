@@ -186,10 +186,10 @@ export function WorkflowStepper({ run }: { run: WorkflowRun }) {
 
               {status === 'pending_retry' && (
                 <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--color-warning-bg)', borderLeft: '3px solid var(--color-accent-amber)', borderRadius: '0 6px 6px 0' }}>
-                  <p style={{ margin: '0 0 6px', fontSize: '0.75rem', fontWeight: 600, color: '#7a5800', fontFamily: '"Inter", sans-serif' }}>
+                  <p style={{ margin: '0 0 6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--warning)', fontFamily: '"Inter", sans-serif' }}>
                     ⟳ Attempt {run.retryCount + 1}/3 — Upstream department returned 503. BullMQ exponential backoff retry in progress…
                   </p>
-                  <div style={{ height: 3, background: 'rgba(0,0,0,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: '70%', background: 'var(--color-accent-amber)', borderRadius: 2, animation: 'pulse 1.5s ease-in-out infinite' }} />
                   </div>
                 </div>

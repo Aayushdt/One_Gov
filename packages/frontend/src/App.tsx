@@ -16,6 +16,7 @@ import { AppealPage } from './pages/AppealPage';
 import { AdminOnboardingPage } from './pages/AdminOnboardingPage';
 import { AdminAppealsPage } from './pages/AdminAppealsPage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
+import { ProfilePage } from './pages/ProfilePage';
 import { useAuthStore } from './store/authStore';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify/certificate" element={<VerifyCertificatePage />} />
+        <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
         <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
         <Route path="/services" element={<RequireAuth><ServicesPage /></RequireAuth>} />
         <Route path="/consent-dashboard" element={<RequireAuth><ConsentDashboardPage /></RequireAuth>} />

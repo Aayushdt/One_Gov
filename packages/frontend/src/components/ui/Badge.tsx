@@ -7,8 +7,8 @@ const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
   success: { background: 'var(--color-success-bg)', color: 'var(--color-success)', border: '1px solid var(--color-success)' },
   revoked: { background: 'var(--color-error-bg)', color: 'var(--color-error)', border: '1px solid var(--color-error)' },
   error:   { background: 'var(--color-error-bg)', color: 'var(--color-error)', border: '1px solid var(--color-error)' },
-  expired: { background: 'var(--color-warning-bg)', color: '#8a5a00', border: '1px solid var(--color-accent-amber)' },
-  warning: { background: 'var(--color-warning-bg)', color: '#8a5a00', border: '1px solid var(--color-accent-amber)' },
+  expired: { background: 'var(--color-warning-bg)', color: 'var(--warning)', border: '1px solid var(--color-accent-amber)' },
+  warning: { background: 'var(--color-warning-bg)', color: 'var(--warning)', border: '1px solid var(--color-accent-amber)' },
   pending: { background: 'var(--color-bg-sunken)', color: 'var(--color-text-tertiary)', border: '1px solid var(--color-border-default)' },
 };
 

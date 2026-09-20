@@ -212,7 +212,7 @@ export function DataMinimizationToggle({ run }: Props) {
           </p>
           {!rawView && (
             <div style={{ padding: '10px 14px', background: 'var(--color-warning-bg)', borderLeft: '3px solid var(--color-accent-amber)', borderRadius: '0 6px 6px 0', marginBottom: 14 }}>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#7a5800', fontFamily: '"Inter", sans-serif', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--warning)', fontFamily: '"Inter", sans-serif', lineHeight: 1.5 }}>
                 🔒 <strong>Zero-Knowledge Privacy Guard Enforced:</strong> The citizen's exact income amount (<strong>incomeRange</strong>) was stripped at the connector boundary. The service received only the qualifying categorical band (<strong>LOW</strong>).
               </p>
             </div>

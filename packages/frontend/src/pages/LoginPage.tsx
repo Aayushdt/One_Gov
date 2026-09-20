@@ -4,15 +4,32 @@ import { api } from '../hooks/useApi';
 import { useAuthStore } from '../store/authStore';
 import {
   Shield, Sparkles, RefreshCw, AlertTriangle, Users, Building2,
-  UserCircle2, ChevronDown, LogIn, UserPlus, Info,
+  UserCircle2, ChevronDown, LogIn, UserPlus, Info, Languages
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { ThemeToggle } from '../components/ThemeToggle';
 
-const AVATAR_COLORS = ['#E5472D', '#2B8A68', '#3b82f6', '#eab308', '#f97316', '#a855f7', '#ec4899'];
+const AVATAR_COLORS = [
+  'var(--dept-1)',
+  'var(--dept-2)',
+  'var(--dept-3)',
+  'var(--dept-4)',
+  'var(--dept-5)',
+  'var(--dept-6)',
+  'var(--dept-7)',
+  'var(--dept-8)',
+];
 
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const citizenId = useAuthStore((s) => s.citizenId);
+  const { i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const nextLang = i18n.language === 'hi' ? 'en' : 'hi';
+    i18n.changeLanguage(nextLang);
+  };
 
   const [tab, setTab] = React.useState<'login' | 'register'>('login');
 
@@ -76,17 +93,48 @@ export function LoginPage() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg-base)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg-base)', position: 'relative' }}>
+      {/* Floating Language & Theme Controls */}
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 50, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <ThemeToggle variant="pill" />
+
+        <button
+          onClick={toggleLanguage}
+          title={i18n.language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 14px',
+            background: 'var(--panel)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '20px',
+            color: 'var(--panel-text)',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow)',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-3)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--panel)')}
+        >
+          <Languages size={14} color="var(--panel-accent)" />
+          <span>{i18n.language === 'hi' ? 'हिन्दी' : 'EN'}</span>
+        </button>
+      </div>
+
       {/* ── Left dark panel ── */}
       <div
         style={{
           width: '40%',
           minWidth: 320,
-          background: 'var(--color-nav-bg)',
+          background: 'var(--panel)',
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '48px 40px',
-          borderRight: '1px solid rgba(255,255,255,0.08)',
+          borderRight: '1px solid var(--border)',
           display: 'flex',
         }}
       >
@@ -95,58 +143,58 @@ export function LoginPage() {
             <div
               style={{
                 width: 38, height: 38,
-                background: 'var(--color-accent-primary)',
+                background: 'var(--primary-brand)',
                 borderRadius: 8,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(184,75,41,0.3)',
+                boxShadow: 'var(--shadow)',
               }}
             >
-              <Shield size={20} color="white" />
+              <Shield size={20} color="var(--on-primary)" />
             </div>
             <div>
-              <span style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.35rem', fontWeight: 600, color: 'var(--color-nav-text)', letterSpacing: '-0.01em' }}>
+              <span style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.35rem', fontWeight: 600, color: 'var(--panel-text)', letterSpacing: '-0.01em' }}>
                 OneGov · GovLink
               </span>
-              <p style={{ margin: 0, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-nav-text-muted)', fontFamily: '"Inter", sans-serif' }}>
+              <p style={{ margin: 0, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--panel-text-2)', fontFamily: '"Inter", sans-serif' }}>
                 Universal Interoperability Middleware
               </p>
             </div>
           </div>
 
-          <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '2rem', fontWeight: 600, color: 'var(--color-nav-text)', lineHeight: 1.25, margin: '0 0 16px' }}>
+          <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '2rem', fontWeight: 600, color: 'var(--panel-text)', lineHeight: 1.25, margin: '0 0 16px' }}>
             Universal Citizen ID & Multi-Agency Federation.
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-nav-text-muted)', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.65, margin: '0 0 32px' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--panel-text-2)', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.65, margin: '0 0 32px' }}>
             OneGov links 8 government department silos through synthetic Universal IDs (<code>OG-2026-XXXXXXXX</code>), zero-knowledge data minimization, and SHA-256 audit chains.
           </p>
 
           <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <Sparkles size={16} color="var(--color-accent-amber)" />
-              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-accent-amber)', fontFamily: '"Inter", sans-serif' }}>
+              <Sparkles size={16} color="var(--panel-accent)" />
+              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--panel-accent)', fontFamily: '"Inter", sans-serif' }}>
                 50 Deterministic Citizens Pre-Populated
               </p>
             </div>
-            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-nav-text-muted)', lineHeight: 1.5, fontFamily: '"Inter", sans-serif' }}>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--panel-text-2)', lineHeight: 1.5, fontFamily: '"Inter", sans-serif' }}>
               8 departmental silos: UIDAI Identity, CBDT Income Tax, NAD Higher Education, Parivahan RTO, CCTNS Police, Core Banking, PDS Welfare, and Municipal Records.
             </p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--color-nav-text-muted)' }}>
-              <Building2 size={14} color="var(--color-accent-primary)" /> 8 Simulated Department Silos Connected
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--panel-text-2)' }}>
+              <Building2 size={14} color="var(--brown)" /> 8 Simulated Department Silos Connected
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--color-nav-text-muted)' }}>
-              <Shield size={14} color="var(--color-success)" /> Zero-Knowledge Data Minimization & Tokenization
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--panel-text-2)' }}>
+              <Shield size={14} color="var(--sage)" /> Zero-Knowledge Data Minimization & Tokenization
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--color-nav-text-muted)' }}>
-              <Users size={14} color="#3b82f6" /> Universal Citizen IDs: <code>OG-2026-00000001</code> → <code>00000050</code>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--panel-text-2)' }}>
+              <Users size={14} color="var(--accent-hi)" /> Universal Citizen IDs: <code>OG-2026-00000001</code> → <code>00000050</code>
             </div>
           </div>
         </div>
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20 }}>
-          <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--color-nav-text-muted)', fontFamily: '"Inter", sans-serif' }}>
+          <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--panel-text-2)', fontFamily: '"Inter", sans-serif' }}>
             Universal Citizen Portal — Secure authentication with multi-agency federated interoperability.
           </p>
         </div>
@@ -426,9 +474,9 @@ export function LoginPage() {
                   {loading ? 'Creating Account…' : 'Register Citizen Account'}
                 </button>
 
-                <div style={{ marginTop: 6, padding: '10px 12px', background: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.3)', borderRadius: 6, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <AlertTriangle size={15} color="#ca8a04" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: 1.45, fontFamily: '"Inter", sans-serif' }}>
+                <div style={{ marginTop: 6, padding: '10px 12px', background: 'var(--warning-tint)', border: '1px solid var(--warning)', borderRadius: 6, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <AlertTriangle size={15} color="var(--warning)" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.45, fontFamily: '"Inter", sans-serif' }}>
                     <strong>Federation Notice:</strong> Self-registered citizens are generated in Postgres with a new Universal ID (<code>OG-2026-9XXXXXXX</code>) without linked department records (UIDAI, CBDT, NAD). Workflows will report that departmental records are unlinked. For simulated cross-department approvals, sign in with a seeded persona.
                   </p>
                 </div>
@@ -484,7 +532,7 @@ export function LoginPage() {
                         width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                         background: AVATAR_COLORS[i % AVATAR_COLORS.length],
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.65rem', fontWeight: 700, color: 'white',
+                        fontSize: '0.65rem', fontWeight: 700, color: 'var(--on-primary)',
                       }}>
                         <UserCircle2 size={14} />
                       </div>

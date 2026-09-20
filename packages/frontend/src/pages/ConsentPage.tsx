@@ -148,14 +148,14 @@ export function ConsentPage() {
           <div style={{
             marginBottom: 20,
             padding: '12px 16px',
-            background: 'rgba(234, 179, 8, 0.08)',
-            border: '1px solid rgba(234, 179, 8, 0.3)',
+            background: 'var(--warning-tint)',
+            border: '1px solid var(--warning)',
             borderRadius: 8,
             display: 'flex',
             alignItems: 'flex-start',
             gap: 10,
           }}>
-            <AlertTriangle size={16} color="#ca8a04" style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertTriangle size={16} color="var(--warning)" style={{ flexShrink: 0, marginTop: 2 }} />
             <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
               <strong>Self-Registered Account:</strong> This account does not have an active IdentityMap linked to simulated department servers. Authorizing consent will run the workflow orchestration up to the identity verification stage, where the system will cleanly report that no federated government records exist.
             </p>
@@ -206,7 +206,7 @@ export function ConsentPage() {
                       width: 18,
                       height: 18,
                       borderRadius: '50%',
-                      background: 'white',
+                      background: 'var(--bg)',
                       transition: 'left var(--duration-base)',
                       boxShadow: 'var(--shadow-sm)',
                     }}
@@ -249,7 +249,7 @@ export function ConsentPage() {
 
                   {item.warning && (
                     <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--color-warning-bg)', borderLeft: '3px solid var(--color-accent-amber)', borderRadius: '0 4px 4px 0' }}>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#7a5800', fontFamily: '"Inter", sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--warning)', fontFamily: '"Inter", sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <AlertTriangle size={13} /> {item.warning}
                       </p>
                     </div>
@@ -392,7 +392,7 @@ export function ConsentPage() {
 
         {isMinor && (!guardianOneGovId.trim() || !guardianAgreed) && (
           <div style={{ margin: '12px 0 0', padding: '10px 14px', background: 'var(--color-warning-bg)', borderLeft: '3px solid var(--color-accent-amber)', borderRadius: '0 4px 4px 0' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#7a5800', fontFamily: '"Inter", sans-serif' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--warning)', fontFamily: '"Inter", sans-serif' }}>
               Guardian OneGov ID and legal attestation are required for minor applicants before consent can be granted.
             </p>
           </div>

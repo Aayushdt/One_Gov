@@ -49,7 +49,13 @@ detect_compose() {
     fi
   fi
 
-  error "Neither Docker (with access) nor Podman socket found.\n  Fix with:  sudo usermod -aG docker \$USER && newgrp docker\n  Or:        systemctl --user start podman.socket"
+  if command -v podman &>/dev/null && podman compose version &>/dev/null 2>&1; then
+    COMPOSE_CMD="podman compose"
+    info "Using Podman Compose"
+    return
+  fi
+
+  error "Neither Docker (with access) nor Podman socket/compose found.\n  Fix with:  sudo usermod -aG docker \$USER && newgrp docker\n  Or:        systemctl --user start podman.socket"
 }
 
 # ── Ensure .env exists ────────────────────────────────────────────────────────
@@ -78,6 +84,9 @@ free_ports() {
   for port in "${PORTS[@]}"; do
     local pids
     pids=$(ss -tlnp 2>/dev/null | grep ":${port} " | grep -oP 'pid=\K[0-9]+' || true)
+    if [ -z "$pids" ] && command -v lsof &>/dev/null; then
+      pids=$(lsof -ti :${port} 2>/dev/null || true)
+    fi
     for pid in $pids; do
       local pname
       pname=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
@@ -99,15 +108,16 @@ cleanup_containers() {
   free_ports
 }
 
-# ── Wait for backend /health ───────────────────────────────────────────────────
+# ── Wait for backend & frontend health ─────────────────────────────────────────
 wait_for_health() {
-  local url="http://localhost:3000/health"
+  local backend_url="http://localhost:3000/health"
+  local frontend_url="http://localhost:5173"
   local max=60 i=0
-  info "Waiting for backend health check (up to $((max * 3))s)..."
+  info "Waiting for backend and frontend health checks (up to $((max * 3))s)..."
   while [ $i -lt $max ]; do
-    if curl -sf "$url" &>/dev/null; then
+    if curl -sf "$backend_url" &>/dev/null && curl -sf "$frontend_url" &>/dev/null; then
       echo ""
-      success "Backend is healthy!"
+      success "Backend and Frontend are healthy & online!"
       return 0
     fi
     printf "."
@@ -115,8 +125,9 @@ wait_for_health() {
     i=$((i + 1))
   done
   echo ""
-  warn "Health check timed out. Showing backend logs:"
-  $COMPOSE_CMD logs backend --tail=30
+  warn "Health check timed out. Showing service logs:"
+  $COMPOSE_CMD logs backend --tail=20
+  $COMPOSE_CMD logs frontend --tail=20
   return 1
 }
 

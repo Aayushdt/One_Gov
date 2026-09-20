@@ -1,65 +1,252 @@
+@import '@fontsource/noto-sans-devanagari';
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-bg-base: #FCFAF6;
-  --color-bg-surface: #F4F3EC;
-  --color-bg-sunken: #EDEAE0;
-  --color-text-primary: #1A1311;
-  --color-text-secondary: #4A3F3B;
-  --color-text-tertiary: #7A6E6A;
-  --color-text-inverse: #FCFAF6;
-  --color-accent-primary: #E5472D;
-  --color-accent-secondary: #C43A22;
-  --color-accent-amber: #F6A81F;
-  --color-success: #2B8A68;
-  --color-success-bg: #EAF4EF;
-  --color-error: #C43A22;
-  --color-error-bg: #FAF0EE;
-  --color-warning: #F6A81F;
-  --color-warning-bg: #FEF7E6;
-  --color-border-subtle: #E0DDD5;
-  --color-border-default: #C8C3BA;
-  --color-border-strong: #1A1311;
-  --color-nav-bg: #1A1311;
-  --color-nav-text: #FCFAF6;
-  --color-nav-text-muted: rgba(252,250,246,0.55);
-  --color-nav-active: #E5472D;
-  --shadow-sm: 0 1px 2px rgba(26,19,17,0.06);
-  --shadow-md: 0 2px 8px rgba(26,19,17,0.08);
-  --shadow-lg: 0 8px 24px rgba(26,19,17,0.10);
+:root, [data-theme="light"] {
+  color-scheme: light;
+  /* surfaces */
+  --bg: #FDFBF6;
+  --surface: #F8F5EE;
+  --surface-2: #F3EDE3;
+  --surface-3: #EDE5D8;
+  --border: #E6DBCC;
+  --border-strong: #D3C5B0;
+  /* text */
+  --text: #261F1D;
+  --text-2: #5C5653;
+  --text-muted: #6F6863;
+  /* primary (red) */
+  --primary: #CF3426;
+  --primary-hover: #AC2B20;
+  --primary-brand: #D93E30;
+  --on-primary: #FDFBF6;
+  --primary-tint: #F9E4DE;
+  /* secondary (rust) */
+  --secondary: #A03401;
+  --on-secondary: #FDFBF6;
+  --secondary-tint: #F2E3D9;
+  /* accent (orange) */
+  --accent: #E87721;
+  --accent-hi: #FA8F2C;
+  --on-accent: #261F1D;
+  --accent-tint: #FDEEDE;
+  /* earthy supporting */
+  --bronze: #8C5D23;
+  --bronze-tint: #EFE8DD;
+  --brown: #825F45;
+  --sage: #636650;
+  --sage-fill: #797D62;
+  --sage-tint: #EDECE4;
+  --salmon: #F29188;
+  --peach: #E99C72;
+  --tan: #D08C60;
+  /* semantic */
+  --success: #636650;
+  --success-tint: #EDECE4;
+  --warning: #8C5D23;
+  --warning-fill: #E87721;
+  --warning-tint: #FDEEDE;
+  --danger: #CF3426;
+  --danger-tint: #F9E4DE;
+  --info: #825F45;
+  --info-tint: #EFE8DD;
+  /* misc */
+  --focus-ring: #A03401;
+  --overlay: rgba(38,31,29,.5);
+  --shadow: 0 1px 2px rgba(38,31,29,.06), 0 4px 16px rgba(38,31,29,.06);
+  /* login left brand panel (dark in both themes) */
+  --panel: #261F1D;
+  --panel-text: #FDFBF6;
+  --panel-text-2: #C4BAB0;
+  --panel-accent: #FA8F2C;
+
+  /* department silos (8) */
+  --dept-1: #D93E30; /* UIDAI Identity */
+  --dept-2: #E87721; /* CBDT Income Tax */
+  --dept-3: #8C5D23; /* NAD Higher Education */
+  --dept-4: #797D62; /* Parivahan RTO */
+  --dept-5: #A03401; /* CCTNS Police */
+  --dept-6: #D08C60; /* Core Banking NPCI */
+  --dept-7: #825F45; /* Public Welfare PDS */
+  --dept-8: #E99C72; /* Municipal Land Records */
+
+  /* Backward-compatible color aliases */
+  --color-bg-base: var(--bg);
+  --color-bg-surface: var(--surface);
+  --color-bg-sunken: var(--surface-2);
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-2);
+  --color-text-tertiary: var(--text-muted);
+  --color-text-inverse: var(--bg);
+  --color-accent-primary: var(--primary);
+  --color-accent-secondary: var(--primary-hover);
+  --color-accent-amber: var(--accent);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-tint);
+  --color-error: var(--danger);
+  --color-error-bg: var(--danger-tint);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-tint);
+  --color-border-subtle: var(--border);
+  --color-border-default: var(--border-strong);
+  --color-border-strong: var(--border-strong);
+  --color-nav-bg: var(--panel);
+  --color-nav-text: var(--panel-text);
+  --color-nav-text-muted: var(--panel-text-2);
+  --color-nav-active: var(--primary-brand);
+  --shadow-sm: 0 1px 2px rgba(38,31,29,0.06);
+  --shadow-md: 0 2px 8px rgba(38,31,29,0.08);
+  --shadow-lg: 0 8px 24px rgba(38,31,29,0.10);
   --duration-fast: 100ms;
-  --duration-base: 200ms;
-  --duration-slow: 350ms;
+  --duration-base: 150ms;
+  --duration-slow: 300ms;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1C1715;
+  --surface: #261F1D;
+  --surface-2: #332C2A;
+  --surface-3: #3E3735;
+  --border: #484240;
+  --border-strong: #5A5250;
+  --text: #F3EEE6;
+  --text-2: #C4BAB0;
+  --text-muted: #A0958C;
+  --primary: #F29188;
+  --primary-hover: #F5A79F;
+  --primary-brand: #F29188;
+  --on-primary: #1C1715;
+  --primary-tint: #47312E;
+  --secondary: #E99C72;
+  --on-secondary: #1C1715;
+  --secondary-tint: #48311F;
+  --accent: #FA8F2C;
+  --accent-hi: #FA8F2C;
+  --accent-soft: #E87721;
+  --on-accent: #1C1715;
+  --accent-tint: #48311F;
+  --bronze: #CD9652;
+  --bronze-tint: #413225;
+  --brown: #B59882;
+  --sage: #9B9D8E;
+  --sage-fill: #9B9D8E;
+  --sage-tint: #39332F;
+  --rust-fill: #A03401;
+  --salmon: #F29188;
+  --peach: #E99C72;
+  --tan: #D08C60;
+  --success: #9B9D8E;
+  --success-tint: #39332F;
+  --warning: #FA8F2C;
+  --warning-fill: #FA8F2C;
+  --warning-tint: #48311F;
+  --danger: #EF6B5E;
+  --danger-tint: #47312E;
+  --info: #B59882;
+  --info-tint: #413225;
+  --focus-ring: #FA8F2C;
+  --overlay: rgba(0,0,0,.6);
+  --shadow: 0 0 0 1px rgba(253,251,246,.06);
+  --panel: #261F1D;
+  --panel-text: #FDFBF6;
+  --panel-text-2: #C4BAB0;
+  --panel-accent: #FA8F2C;
 
-html { font-size: 16px; }
+  /* department silos (8) */
+  --dept-1: #F29188; /* UIDAI Identity */
+  --dept-2: #FA8F2C; /* CBDT Income Tax */
+  --dept-3: #CD9652; /* NAD Higher Education */
+  --dept-4: #9B9D8E; /* Parivahan RTO */
+  --dept-5: #F5763A; /* CCTNS Police */
+  --dept-6: #D08C60; /* Core Banking NPCI */
+  --dept-7: #B59882; /* Public Welfare PDS */
+  --dept-8: #E99C72; /* Municipal Land Records */
+
+  /* Backward-compatible color aliases */
+  --color-bg-base: var(--bg);
+  --color-bg-surface: var(--surface);
+  --color-bg-sunken: var(--surface-2);
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-2);
+  --color-text-tertiary: var(--text-muted);
+  --color-text-inverse: var(--bg);
+  --color-accent-primary: var(--primary);
+  --color-accent-secondary: var(--primary-hover);
+  --color-accent-amber: var(--accent);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-tint);
+  --color-error: var(--danger);
+  --color-error-bg: var(--danger-tint);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-tint);
+  --color-border-subtle: var(--border);
+  --color-border-default: var(--border-strong);
+  --color-border-strong: var(--border-strong);
+  --color-nav-bg: var(--panel);
+  --color-nav-text: var(--panel-text);
+  --color-nav-text-muted: var(--panel-text-2);
+  --color-nav-active: var(--primary);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.55);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.70);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+  }
+}
+
+html {
+  font-size: 16px;
+}
+
+:lang(hi) {
+  line-height: 1.6;
+}
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: var(--color-bg-base);
-  color: var(--color-text-primary);
+  font-family: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background-color: #E5472D;
-  color: #FCFAF6;
+  background-color: var(--primary-tint);
+  color: var(--text);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent-primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-bg-surface); }
-::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
