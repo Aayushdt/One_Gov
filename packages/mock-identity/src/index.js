@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 4001;
 // Import or generate the 50 deterministic citizen profiles
 let DETERMINISTIC_50_CITIZENS;
 try {
-  const { generate50Citizens } = require('../../../scripts/deterministic_50_citizens');
+  const { generate50Citizens } = require('../scripts/deterministic_50_citizens');
   DETERMINISTIC_50_CITIZENS = generate50Citizens();
 } catch (e) {
   // Fallback inline generator if path is isolated

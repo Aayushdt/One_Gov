@@ -17,10 +17,12 @@ if (!process.env.DATABASE_URL) {
   if (fs.existsSync(envPath)) {
     const envLines = fs.readFileSync(envPath, 'utf8').split('\n');
     for (const line of envLines) {
-      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?$/);
       if (match) {
+        const key = match[1];
         let val = match[2] || '';
         val = val.replace(/^["'](.*)["']$/, '$1').trim();
+        process.env[key] = val;
       }
     }
   }

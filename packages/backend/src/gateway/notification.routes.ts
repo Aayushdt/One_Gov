@@ -126,8 +126,13 @@ export async function notificationRoutes(app: FastifyInstance) {
     return reply.send({ success: true });
   });
 
-  // POST /api/notifications/test-scan (admin / trigger check)
+  // Task 35: POST /api/notifications/test-scan — restricted to ADMIN role
   app.post('/test-scan', async (request, reply) => {
+    try { await request.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
+    const { role } = request.user as any;
+    if (role !== 'ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN', message: 'ADMIN role required to trigger notification scan.' });
+    }
     const result = await notificationService.checkAndNotifyExpiringConsents();
     return reply.send(result);
   });

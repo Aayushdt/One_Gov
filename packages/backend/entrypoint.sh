@@ -2,8 +2,26 @@
 set -e
 
 echo "==> Waiting for Postgres and running migrations..."
-until npx prisma migrate deploy; do
-  echo "    Migration failed — retrying in 3s..."
+MAX_RETRIES=20
+RETRY=0
+until npx prisma migrate deploy 2>&1; do
+  MIGRATE_OUTPUT=$(npx prisma migrate deploy 2>&1 || true)
+  # Auto-resolve P3009: a previous migration is marked as failed in the DB.
+  # This happens when a container was killed after SQL ran but before Prisma
+  # recorded the success. We mark the migration as rolled-back so deploy can proceed.
+  if echo "$MIGRATE_OUTPUT" | grep -q "P3009"; then
+    FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oP 'The `\K[^`]+(?=` migration)' | head -1)
+    if [ -n "$FAILED_MIG" ]; then
+      echo "    Detected failed migration: $FAILED_MIG — resolving..."
+      npx prisma migrate resolve --rolled-back "$FAILED_MIG" || true
+    fi
+  fi
+  RETRY=$((RETRY + 1))
+  if [ "$RETRY" -ge "$MAX_RETRIES" ]; then
+    echo "    Migration failed after $MAX_RETRIES attempts — exiting."
+    exit 1
+  fi
+  echo "    Migration failed (attempt $RETRY/$MAX_RETRIES) — retrying in 3s..."
   sleep 3
 done
 

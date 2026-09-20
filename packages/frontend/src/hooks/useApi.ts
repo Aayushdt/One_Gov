@@ -173,14 +173,11 @@ export const api = {
     req<any>('/api/ops/retention/run', { method: 'POST', body: JSON.stringify({ retentionGraceDays }) }),
 
   getOpsMetrics: () =>
-    req<{ ok: boolean; connectors: any[] }>('/api/ops/metrics', {
-      headers: { 'x-admin-role': 'ADMIN' },
-    }),
+    req<{ ok: boolean; connectors: any[] }>('/api/ops/metrics'),
 
   resetCircuitBreaker: (connectorSlug: string) =>
-    req<{ ok: boolean; message: string }>(`/api/ops/circuits/${connectorSlug}/reset`, {
+    req<{ ok: boolean; message: string }>(`/api/ops/circuit-breaker/${connectorSlug}/reset`, {
       method: 'POST',
-      headers: { 'x-admin-role': 'ADMIN' },
     }),
 
   downloadExport: async (exportId: string): Promise<Blob> => {

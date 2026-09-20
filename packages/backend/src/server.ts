@@ -30,11 +30,12 @@ async function bootstrap() {
   // Gzip/Brotli compression (Item 6: Low-Bandwidth Tolerance)
   await app.register(compress, { global: true });
 
-  // Global Inbound Rate Limiter (Item 12: 100 req/min per IP)
+  // Task 34: Rate limiter — allowList restricted to /health only.
+  // x-admin-role header bypass removed; admin JWT tokens are subject to rate limiting like all other requests.
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
-    allowList: (req) => req.url.startsWith('/health') || req.headers['x-admin-role'] === 'ADMIN',
+    allowList: (req) => req.url.startsWith('/health'),
   });
 
   await app.register(jwt, { secret: process.env.JWT_SECRET ?? 'govlink_dev_secret' });

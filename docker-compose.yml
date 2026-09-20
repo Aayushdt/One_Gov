@@ -25,19 +25,25 @@ services:
       retries: 5
 
   mock-identity:
-    build: ./packages/mock-identity
+    build:
+      context: .
+      dockerfile: ./packages/mock-identity/Dockerfile
     environment:
       PORT: 4001
     expose: ["4001"]
 
   mock-education:
-    build: ./packages/mock-education
+    build:
+      context: .
+      dockerfile: ./packages/mock-education/Dockerfile
     environment:
       PORT: 4002
     expose: ["4002"]
 
   mock-revenue:
-    build: ./packages/mock-revenue
+    build:
+      context: .
+      dockerfile: ./packages/mock-revenue/Dockerfile
     environment:
       PORT: 4003
       REVENUE_FAIL_COUNTS: '{"SIM-PAN-000004":1}'

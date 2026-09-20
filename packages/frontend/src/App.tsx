@@ -24,6 +24,15 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Task 23: Admin-only route guard — redirects to /dashboard if not authenticated as ADMIN.
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const citizenId = useAuthStore(s => s.citizenId);
+  const role = useAuthStore(s => s.role);
+  if (!citizenId) return <Navigate to="/login" replace />;
+  if (role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -43,9 +52,10 @@ export default function App() {
         <Route path="/data-export" element={<RequireAuth><DataExportPage /></RequireAuth>} />
         <Route path="/audit" element={<RequireAuth><AuditPage /></RequireAuth>} />
         <Route path="/my-history" element={<RequireAuth><AuditNarrativePage /></RequireAuth>} />
-        <Route path="/admin/onboarding" element={<RequireAuth><AdminOnboardingPage /></RequireAuth>} />
-        <Route path="/admin/appeals" element={<RequireAuth><AdminAppealsPage /></RequireAuth>} />
-        <Route path="/ops" element={<OpsPage />} />
+        {/* Admin-only routes: require ADMIN role in JWT, else redirect to /dashboard */}
+        <Route path="/admin/onboarding" element={<RequireAdmin><AdminOnboardingPage /></RequireAdmin>} />
+        <Route path="/admin/appeals" element={<RequireAdmin><AdminAppealsPage /></RequireAdmin>} />
+        <Route path="/ops" element={<RequireAdmin><OpsPage /></RequireAdmin>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

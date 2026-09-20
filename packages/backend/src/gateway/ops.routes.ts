@@ -5,17 +5,11 @@ import { connectorRegistry } from '../registry/connector.registry';
 import { retentionService } from '../retention/retention.service';
 
 export async function opsRoutes(fastify: FastifyInstance) {
-  // Authentication hook for admin operations
+  // Task 33: Authentication hook for admin operations.
+  // Requires a valid JWT with role === 'ADMIN'. The x-admin-role header bypass has been removed.
   fastify.addHook('preHandler', async (request, reply) => {
-    const adminHeader = request.headers['x-admin-role'];
     const authHeader = request.headers.authorization;
 
-    // Allow if explicit admin role header is present
-    if (adminHeader === 'ADMIN') {
-      return;
-    }
-
-    // Check JWT payload for ADMIN role (or fallback for testing)
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
         const decoded = await request.jwtVerify() as any;
@@ -23,11 +17,10 @@ export async function opsRoutes(fastify: FastifyInstance) {
           return;
         }
       } catch {
-        // Fall through to 403
+        // JWT verification failed — fall through to 403
       }
     }
 
-    // Default admin check fallback
     return reply.code(403).send({ error: 'Admin role required to access ops endpoints' });
   });
 

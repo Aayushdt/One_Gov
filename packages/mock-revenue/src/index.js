@@ -15,7 +15,7 @@ const hitCounters = {};
 
 let DETERMINISTIC_50_CITIZENS;
 try {
-  const { generate50Citizens } = require('../../../scripts/deterministic_50_citizens');
+  const { generate50Citizens } = require('../scripts/deterministic_50_citizens');
   DETERMINISTIC_50_CITIZENS = generate50Citizens();
 } catch (e) {
   const { generate50Citizens } = require('./citizens');

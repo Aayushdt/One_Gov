@@ -106,6 +106,7 @@ initCron();
 const shutdown = async () => {
   console.log('\n==> Worker shutting down gracefully...');
   await worker.close();
+  await cronWorker.close();
   await connection.quit();
   await prisma.$disconnect();
   process.exit(0);

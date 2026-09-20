@@ -32,6 +32,9 @@ export interface CertificatePayload {
 export class CertificateService {
   private getPrivateKey() {
     const raw = process.env.CERT_PRIVATE_KEY_BASE64 || DEFAULT_PRIV_KEY;
+    if (!process.env.CERT_PRIVATE_KEY_BASE64 && process.env.NODE_ENV !== 'test') {
+      console.warn('[CertificateService] WARNING: Using hardcoded fallback Ed25519 private key. Set CERT_PRIVATE_KEY_BASE64 for production use.');
+    }
     return crypto.createPrivateKey({
       key: Buffer.from(raw, 'base64'),
       format: 'der',
@@ -41,6 +44,9 @@ export class CertificateService {
 
   private getPublicKey() {
     const raw = process.env.CERT_PUBLIC_KEY_BASE64 || DEFAULT_PUB_KEY;
+    if (!process.env.CERT_PUBLIC_KEY_BASE64 && process.env.NODE_ENV !== 'test') {
+      console.warn('[CertificateService] WARNING: Using hardcoded fallback Ed25519 public key. Set CERT_PUBLIC_KEY_BASE64 for production use.');
+    }
     return crypto.createPublicKey({
       key: Buffer.from(raw, 'base64'),
       format: 'der',

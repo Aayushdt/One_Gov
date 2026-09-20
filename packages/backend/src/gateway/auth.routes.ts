@@ -133,8 +133,9 @@ export async function authRoutes(app: FastifyInstance) {
     };
   });
 
-  // Directory of all deterministic citizens (useful for demo persona selectors)
-  // Note: email is intentionally excluded — the demo uses onegovId for login, not credentials.
+  // Task 31: Directory of deterministic citizens for demo persona selectors.
+  // Returns only display-safe fields — identityMap (simulated Aadhaar/PAN/NAD IDs) is intentionally excluded.
+  // Email and passwordHash are never exposed. Demo UI only needs onegovId for one-click login.
   app.get('/citizens', async () => {
     const citizens = await prisma.citizen.findMany({
       select: {
@@ -143,7 +144,6 @@ export async function authRoutes(app: FastifyInstance) {
         name: true,
         state: true,
         district: true,
-        identityMap: true,
       },
       orderBy: { onegovId: 'asc' },
     });

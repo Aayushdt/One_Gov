@@ -3,6 +3,7 @@ import { DataCategory } from '@prisma/client';
 import { consentService } from '../consent/consent.service';
 import { auditService } from '../audit/audit.service';
 import { workflowEngine } from '../workflow/engine';
+import { prisma } from '../config/db';
 
 export async function consentRoutes(app: FastifyInstance) {
   // Grant consent for a run
@@ -30,10 +31,17 @@ export async function consentRoutes(app: FastifyInstance) {
     }
 
     // Resolve serviceType from the workflow run for accurate purpose labelling
-    const workflowRun = await import('../config/db').then(({ prisma }) =>
-      prisma.workflowRun.findUnique({ where: { id: runId }, select: { serviceType: true, citizenId: true } })
-    );
+    const workflowRun = await prisma.workflowRun.findUnique({
+      where: { id: runId },
+      select: { serviceType: true, citizenId: true },
+    });
     const serviceType = workflowRun?.serviceType ?? 'SCHOLARSHIP';
+
+    // Task 27: Ownership check — caller must own the workflow run (or be ADMIN)
+    if (workflowRun && workflowRun.citizenId !== user.citizenId && user.role !== 'ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN', message: 'You do not own this workflow run.' });
+    }
+
     if (workflowRun?.citizenId) {
       citizenId = workflowRun.citizenId;
     }
@@ -110,9 +118,21 @@ export async function consentRoutes(app: FastifyInstance) {
     return reply.send({ artefacts });
   });
 
-  // Get consent status for a run
+  // Task 28: Get consent status for a run — restricted to run owner or ADMIN
   app.get<{ Params: { runId: string } }>('/run/:runId', async (req, reply) => {
     try { await req.jwtVerify(); } catch { return reply.status(401).send({ error: 'UNAUTHORIZED' }); }
+    const { citizenId, role } = req.user as any;
+
+    // Verify ownership before returning consent artefacts
+    const run = await prisma.workflowRun.findUnique({
+      where: { id: req.params.runId },
+      select: { citizenId: true },
+    });
+    if (!run) return reply.status(404).send({ error: 'NOT_FOUND' });
+    if (run.citizenId !== citizenId && role !== 'ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN' });
+    }
+
     const artefacts = await consentService.getConsentStatus(req.params.runId);
     return { artefacts };
   });

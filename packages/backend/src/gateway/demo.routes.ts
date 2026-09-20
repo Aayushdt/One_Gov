@@ -9,6 +9,11 @@ import { auditService } from '../audit/audit.service';
  */
 export async function demoRoutes(app: FastifyInstance) {
   app.post<{ Body: { onegovId: string } }>('/demo-login', async (req, reply) => {
+    // Task 32: Disable passwordless demo login in production to prevent credential bypass.
+    if (process.env.NODE_ENV === 'production') {
+      return reply.status(404).send({ error: 'NOT_FOUND' });
+    }
+
     const { onegovId } = req.body ?? {};
 
     if (!onegovId || !onegovId.startsWith('OG-2026-')) {

@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { auditService } from '../audit/audit.service';
 import { toNarrative } from '../audit/audit.narrator';
-import { prisma } from '../config/db';
 
 export async function auditRoutes(app: FastifyInstance) {
   // Plain language narrative audit trail (Item 4)

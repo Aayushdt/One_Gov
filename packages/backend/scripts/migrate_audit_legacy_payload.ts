@@ -27,12 +27,10 @@
  *
  * Usage:
  *   cd packages/backend
- *   npx ts-node ../../scripts/migrate_audit_legacy_payload.ts
+ *   npx ts-node scripts/migrate_audit_legacy_payload.ts
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../src/config/db';
 
 async function main() {
   console.log('Starting legacy audit payload migration...');
@@ -130,5 +128,4 @@ main()
   .catch((err) => {
     console.error('Migration failed:', err);
     process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  });

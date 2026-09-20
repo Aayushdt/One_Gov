@@ -27,7 +27,7 @@ interface AuthState {
   primaryAddress: string | null;
   identityMap: Record<string, string> | null;
   token: string | null;
-  login: (...args: any[]) => void;
+  login: (profile: CitizenAuthProfile) => void;
   logout: () => void;
 }
 
@@ -45,39 +45,29 @@ export const useAuthStore = create<AuthState>()(
       primaryAddress: null,
       identityMap: null,
       token: null,
-      login: (...args: any[]) => {
-        let profile: any = {};
-        if (typeof args[0] === 'object' && args[0] !== null) {
-          profile = args[0];
-        } else {
-          profile = {
-            citizenId: args[0],
-            name: args[1],
-            token: args[2],
-            onegovId: args[3],
-            email: args[4],
-          };
+      login: (profile: CitizenAuthProfile) => {
+        if (!profile.citizenId) {
+          throw new Error('[authStore] login() called with missing citizenId — refusing to set invalid session.');
         }
 
-        const citizenId = profile.citizenId || 'citizen-000001';
-        const onegovId = profile.onegovId || `OG-2026-${String(citizenId).slice(-8)}`;
+        const onegovId = profile.onegovId ?? `OG-2026-${String(profile.citizenId).slice(-8)}`;
 
         if (profile.token) {
           localStorage.setItem('govlink_token', profile.token);
         }
 
         set({
-          citizenId,
+          citizenId: profile.citizenId,
           onegovId,
           name: profile.name || 'Citizen',
-          email: profile.email || null,
-          role: profile.role || 'CITIZEN',
-          state: profile.state || null,
-          district: profile.district || null,
-          pincode: profile.pincode || null,
-          primaryAddress: profile.primaryAddress || null,
-          identityMap: profile.identityMap || null,
-          token: profile.token || null,
+          email: profile.email ?? null,
+          role: profile.role ?? 'CITIZEN',
+          state: profile.state ?? null,
+          district: profile.district ?? null,
+          pincode: profile.pincode ?? null,
+          primaryAddress: profile.primaryAddress ?? null,
+          identityMap: profile.identityMap ?? null,
+          token: profile.token ?? null,
         });
       },
       logout: () => {
